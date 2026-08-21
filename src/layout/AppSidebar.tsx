@@ -15,9 +15,14 @@ import {
   PieChartIcon,
   PlugInIcon,
   TableIcon,
+  TaskIcon,
+  TimeIcon,
+  TrashBinIcon,
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
+import { useTasks } from "@/context/TasksContext";
+import { Brain } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -27,6 +32,26 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  {
+    icon: <TimeIcon />,
+    name: "Rotina",
+    path: "/rotina",
+  },
+  {
+    icon: <TaskIcon />,
+    name: "Tarefas",
+    path: "/tasks",
+  },
+  {
+    icon: <Brain className="w-5 h-5" />,
+    name: "Foco",
+    path: "/foco",
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Calendário",
+    path: "/calendario",
+  },
   {
     icon: <GridIcon />,
     name: "Dashboard",
@@ -97,6 +122,8 @@ const othersItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
+  const { trashTasks } = useTasks();
+  const trashCount = trashTasks.length;
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -336,7 +363,7 @@ const AppSidebar: React.FC = () => {
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+      <div className="flex flex-col flex-1 min-h-0 overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
             <div>
@@ -375,6 +402,41 @@ const AppSidebar: React.FC = () => {
           </div>
         </nav>
         {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
+      </div>
+
+      <div className="mt-auto border-t border-gray-200 dark:border-gray-800 py-4">
+        <Link
+          href="/lixeira"
+          title="Lixeira (30 dias)"
+          className={`flex items-center rounded-xl transition-colors ${
+            isExpanded || isHovered || isMobileOpen ? "gap-3 px-2 py-1.5" : "justify-center py-1.5"
+          } ${
+            pathname === "/lixeira"
+              ? "bg-rose-50 dark:bg-rose-500/10"
+              : "hover:bg-gray-50 dark:hover:bg-white/5"
+          }`}
+        >
+          <span
+            className={`relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border ${
+              pathname === "/lixeira"
+                ? "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400"
+                : "border-gray-200 bg-gray-50 text-gray-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:border-gray-700 dark:bg-white/5 dark:text-gray-400"
+            }`}
+          >
+            <TrashBinIcon />
+            {trashCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                {trashCount > 9 ? "9+" : trashCount}
+              </span>
+            )}
+          </span>
+          {(isExpanded || isHovered || isMobileOpen) && (
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Lixeira</span>
+              <span className="block text-[11px] text-gray-400">Guarda 30 dias</span>
+            </span>
+          )}
+        </Link>
       </div>
     </aside>
   );

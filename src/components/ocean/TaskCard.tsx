@@ -161,7 +161,7 @@ export default function TaskCard({
               task.status === "done"
                 ? "text-gray-400 line-through"
                 : variant === "priority"
-                  ? "text-black"
+                  ? "text-black dark:text-white/90"
                   : "text-gray-700 dark:text-gray-300"
             }`}
           >

@@ -17,12 +17,10 @@ import {
   TableIcon,
   TaskIcon,
   TimeIcon,
-  TrashBinIcon,
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
-import { useTasks } from "@/context/TasksContext";
-import { Brain } from "lucide-react";
+import { BarChart3, BookHeart, Brain } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -53,6 +51,16 @@ const navItems: NavItem[] = [
     path: "/calendario",
   },
   {
+    icon: <BookHeart className="h-5 w-5" />,
+    name: "Minha jornada",
+    path: "/jornada",
+  },
+  {
+    icon: <BarChart3 className="h-5 w-5" />,
+    name: "Insights",
+    path: "/insights",
+  },
+  {
     icon: <GridIcon />,
     name: "Dashboard",
     subItems: [{ name: "Ecommerce", path: "/", pro: false }],
@@ -62,12 +70,6 @@ const navItems: NavItem[] = [
     name: "Calendar",
     path: "/calendar",
   },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
-
   {
     name: "Forms",
     icon: <ListIcon />,
@@ -122,8 +124,6 @@ const othersItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
-  const { trashTasks } = useTasks();
-  const trashCount = trashTasks.length;
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -406,34 +406,29 @@ const AppSidebar: React.FC = () => {
 
       <div className="mt-auto border-t border-gray-200 dark:border-gray-800 py-4">
         <Link
-          href="/lixeira"
-          title="Lixeira (30 dias)"
+          href="/profile"
+          title="Meu perfil"
           className={`flex items-center rounded-xl transition-colors ${
             isExpanded || isHovered || isMobileOpen ? "gap-3 px-2 py-1.5" : "justify-center py-1.5"
           } ${
-            pathname === "/lixeira"
-              ? "bg-rose-50 dark:bg-rose-500/10"
+            pathname === "/profile"
+              ? "bg-brand-50 dark:bg-brand-500/10"
               : "hover:bg-gray-50 dark:hover:bg-white/5"
           }`}
         >
           <span
             className={`relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border ${
-              pathname === "/lixeira"
-                ? "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400"
-                : "border-gray-200 bg-gray-50 text-gray-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:border-gray-700 dark:bg-white/5 dark:text-gray-400"
+              pathname === "/profile"
+                ? "border-brand-200 bg-brand-50 text-brand-600 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400"
+                : "border-gray-200 bg-gray-50 text-gray-500 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 dark:border-gray-700 dark:bg-white/5 dark:text-gray-400"
             }`}
           >
-            <TrashBinIcon />
-            {trashCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                {trashCount > 9 ? "9+" : trashCount}
-              </span>
-            )}
+            <UserCircleIcon />
           </span>
           {(isExpanded || isHovered || isMobileOpen) && (
             <span className="min-w-0">
-              <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Lixeira</span>
-              <span className="block text-[11px] text-gray-400">Guarda 30 dias</span>
+              <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Meu perfil</span>
+              <span className="block text-[11px] text-gray-400">Conta e plano</span>
             </span>
           )}
         </Link>

@@ -18,6 +18,7 @@ import { AmbientEngine, playChime } from "@/lib/ocean/ambient";
 import {
   DEFAULT_FOCUS_SETTINGS,
   FOCUS_PRESETS,
+  FOCUS_HISTORY_KEY,
   FOCUS_SETTINGS_KEY,
   FOCUS_THEMES,
   themeAssetPaths,
@@ -134,6 +135,18 @@ export default function FocusStage() {
     if (current === "focus") {
       const nextCount = completedRef.current + 1;
       setCompleted(nextCount);
+      try {
+        const raw = window.localStorage.getItem(FOCUS_HISTORY_KEY);
+        const history = raw ? JSON.parse(raw) : [];
+        const now = new Date();
+        const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        window.localStorage.setItem(
+          FOCUS_HISTORY_KEY,
+          JSON.stringify([...history, { date, minutes: s.focusMinutes }].slice(-365))
+        );
+      } catch {
+        // Focus history is optional when browser storage is unavailable.
+      }
       const nextPhase: Phase = nextCount % s.sessionsUntilLong === 0 ? "longBreak" : "break";
       setPhase(nextPhase);
       setRemaining(phaseDuration(nextPhase, s));

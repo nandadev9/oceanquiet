@@ -7,7 +7,7 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Perfil | OceanQuiet",
+  title: "Perfil",
   description: "Preferências de perfil, assinatura e itens arquivados do OceanQuiet.",
 };
 

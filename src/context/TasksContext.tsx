@@ -172,16 +172,19 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [patchStore]);
 
   const setStatus = useCallback(
-    (id: string, status: TaskStatus) => updateTask(id, { status }),
+    (id: string, status: TaskStatus) =>
+      updateTask(id, { status, completedAt: status === "done" ? new Date().toISOString() : null }),
     [updateTask]
   );
 
   const toggleDone = useCallback((id: string) => {
     patchStore((prev) => ({
       ...prev,
-      tasks: prev.tasks.map((t) =>
-        t.id === id ? { ...t, status: t.status === "done" ? "todo" : "done" } : t
-      ),
+      tasks: prev.tasks.map((t) => {
+        if (t.id !== id) return t;
+        const done = t.status !== "done";
+        return { ...t, status: done ? "done" : "todo", completedAt: done ? new Date().toISOString() : null };
+      }),
     }));
   }, [patchStore]);
 

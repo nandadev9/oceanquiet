@@ -31,6 +31,7 @@ export interface Task {
   subtasks: Subtask[];
   links: string[];
   archivedAt: string | null;
+  completedAt?: string | null;
   createdAt: string;
 }
 

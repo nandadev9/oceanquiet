@@ -494,12 +494,12 @@ function ScheduleCard({
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${accent}`} />
       <div className="pl-2.5 pr-6 py-1 cursor-grab active:cursor-grabbing h-full">
         <p
-          className="text-xs font-semibold text-black truncate leading-tight"
+          className="text-xs font-semibold text-black dark:text-white/90 truncate leading-tight"
         >
           {title}
         </p>
         {height >= 36 && (
-          <p className="text-[10px] text-black truncate">
+          <p className="text-[10px] text-black dark:text-gray-300 truncate">
             {minutesToTimeLabel(block.startMinutes)} – {minutesToTimeLabel(block.startMinutes + block.durationMinutes)}
             {subtitle ? ` · ${subtitle}` : ""}
           </p>

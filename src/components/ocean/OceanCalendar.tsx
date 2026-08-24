@@ -113,7 +113,7 @@ export default function OceanCalendar() {
   const onResize = (info: EventResizeDoneArg) => persistTimes(info.event.id, info.event.start, info.event.end);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-2xl border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900/60">
       <style>{`
         .oq-calendar .fc.fc-media-screen { min-height: 0 !important; }
         .oq-calendar .fc-toolbar.fc-header-toolbar {
@@ -224,13 +224,92 @@ export default function OceanCalendar() {
         .oq-calendar .oq-cal-danger { background: #fee4e2 !important; color: #7a271a !important; box-shadow: inset 3px 0 0 #f04438 !important; }
         .oq-calendar .oq-cal-success { background: #d1fadf !important; color: #054f31 !important; box-shadow: inset 3px 0 0 #12b76a !important; }
         .oq-calendar .oq-cal-warning { background: #fef0c7 !important; color: #7a2e0e !important; box-shadow: inset 3px 0 0 #f79009 !important; }
+        /* FullCalendar brings its own light surfaces. Keep every view inside the
+           night palette instead of leaving a white grid behind. */
+        .dark .oq-calendar .fc,
+        .dark .oq-calendar .fc-view-harness,
+        .dark .oq-calendar .fc-view-harness-active > .fc-view,
+        .dark .oq-calendar .fc-scrollgrid-section > *,
+        .dark .oq-calendar .fc-daygrid-body,
+        .dark .oq-calendar .fc-timegrid-body,
+        .dark .oq-calendar .fc-timegrid-body table,
+        .dark .oq-calendar .fc-daygrid-body table {
+          background: #111b2d !important;
+          color: #e2e8f0 !important;
+        }
+        .dark .oq-calendar .fc-toolbar-title { color: #f8fafc !important; }
+        .dark .oq-calendar .fc-button {
+          background: #162033 !important;
+          border-color: #334155 !important;
+          color: #cbd5e1 !important;
+        }
+        .dark .oq-calendar .fc-button:hover,
+        .dark .oq-calendar .fc-button:focus-visible {
+          background: #1e293b !important;
+          border-color: #64748b !important;
+          color: #fff !important;
+        }
+        .dark .oq-calendar .fc-button:focus-visible {
+          box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.3) !important;
+        }
+        .dark .oq-calendar .fc-header-toolbar .fc-toolbar-chunk:last-child { background: #0b1220 !important; }
+        .dark .oq-calendar .fc-header-toolbar .fc-toolbar-chunk:last-child .fc-button.fc-button-active,
+        .dark .oq-calendar .fc-button-primary:not(:disabled).fc-button-active,
+        .dark .oq-calendar .fc-button-primary:not(:disabled):active {
+          background: #334155 !important;
+          border-color: #475569 !important;
+          color: #fff !important;
+        }
+        .dark .oq-calendar .fc-theme-standard td,
+        .dark .oq-calendar .fc-theme-standard th,
+        .dark .oq-calendar .fc-scrollgrid,
+        .dark .oq-calendar .fc-scrollgrid-section > * { border-color: #334155 !important; }
+        .dark .oq-calendar .fc-col-header-cell,
+        .dark .oq-calendar .fc-timegrid-axis,
+        .dark .oq-calendar .fc-timegrid-slot-label { background: #162033 !important; }
+        .dark .oq-calendar .fc-daygrid-day,
+        .dark .oq-calendar .fc-daygrid-day-frame,
+        .dark .oq-calendar .fc-timegrid-col,
+        .dark .oq-calendar .fc-timegrid-col-frame,
+        .dark .oq-calendar .fc-timegrid-slot,
+        .dark .oq-calendar .fc-timegrid-slot-lane { background: #111b2d !important; }
+        .dark .oq-calendar .fc-timegrid-slot,
+        .dark .oq-calendar .fc-timegrid-slot-minor { border-color: #334155 !important; }
+        .dark .oq-calendar .fc-timegrid-col.fc-day-today,
+        .dark .oq-calendar .fc-daygrid-day.fc-day-today,
+        .dark .oq-calendar .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame { background: #162033 !important; }
+        .dark .oq-calendar .fc-daygrid-day-number,
+        .dark .oq-calendar .fc-col-header-cell-cushion,
+        .dark .oq-calendar .fc-timegrid-slot-label-cushion,
+        .dark .oq-calendar .fc-timegrid-axis-cushion { color: #cbd5e1 !important; }
+        .dark .oq-calendar .fc-col-header-cell-cushion { color: #e2e8f0 !important; }
+        .dark .oq-calendar .fc-day-other .fc-daygrid-day-number { color: #64748b !important; }
+        .dark .oq-calendar .fc-daygrid-more-link { color: #a5b4fc !important; }
+        .dark .oq-calendar .fc-highlight { background: rgba(129, 140, 248, 0.24) !important; }
+        .dark .oq-calendar .fc-timegrid-now-indicator-line { border-color: #a5b4fc !important; }
+        .dark .oq-calendar .fc-timegrid-now-indicator-arrow { border-color: #a5b4fc !important; color: #a5b4fc !important; }
+        .dark .oq-calendar .fc-popover {
+          background: #162033 !important;
+          border-color: #475569 !important;
+          color: #e2e8f0 !important;
+        }
+        .dark .oq-calendar .fc-popover-header { background: #1e293b !important; color: #f8fafc !important; }
+        .dark .oq-calendar .fc-popover-close { color: #cbd5e1 !important; }
+        .dark .oq-calendar .oq-cal-primary { background: #312e81 !important; color: #eef2ff !important; box-shadow: inset 3px 0 0 #818cf8 !important; }
+        .dark .oq-calendar .oq-cal-danger { background: #5d1a2a !important; color: #ffe4e6 !important; box-shadow: inset 3px 0 0 #fb7185 !important; }
+        .dark .oq-calendar .oq-cal-success { background: #064e3b !important; color: #d1fae5 !important; box-shadow: inset 3px 0 0 #34d399 !important; }
+        .dark .oq-calendar .oq-cal-warning { background: #713f12 !important; color: #fef3c7 !important; box-shadow: inset 3px 0 0 #fbbf24 !important; }
+        .dark .oq-calendar .fc-event { border-color: transparent !important; }
+        .dark .oq-calendar .fc-event .fc-event-main,
+        .dark .oq-calendar .fc-event .fc-event-time,
+        .dark .oq-calendar .fc-event .fc-event-title { color: inherit !important; }
       `}</style>
       <div className="oq-calendar">
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           locale={ptBrLocale}
-          initialView="timeGridDay"
+          initialView="dayGridMonth"
           headerToolbar={{
             left: "prev,next today addSlotButton",
             center: "title",

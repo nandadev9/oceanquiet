@@ -101,6 +101,7 @@ export const FOCUS_PRESETS = [
 ] as const;
 
 export const FOCUS_SETTINGS_KEY = "oceanquiet.focus.v1";
+export const FOCUS_HISTORY_KEY = "oceanquiet.focus-history.v1";
 
 export interface FocusSettings {
   themeId: FocusThemeId;

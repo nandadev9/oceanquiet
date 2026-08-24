@@ -158,7 +158,11 @@ export default function TaskCard({
         <div className="flex-1 min-w-0">
           <p
             className={`text-sm leading-snug ${
-              task.status === "done" ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"
+              task.status === "done"
+                ? "text-gray-400 line-through"
+                : variant === "priority"
+                  ? "text-black"
+                  : "text-gray-700 dark:text-gray-300"
             }`}
           >
             {task.title}

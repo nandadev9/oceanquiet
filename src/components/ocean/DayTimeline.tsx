@@ -293,7 +293,7 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
           {DAY_PERIODS.map((period) => (
             <div
               key={period.id}
-              className={`absolute z-20 pointer-events-none rounded-xl border border-dashed border-gray-200/90 dark:border-gray-700 ${period.tint} ${
+              className={`absolute z-0 pointer-events-none rounded-xl border border-dashed border-gray-200/90 dark:border-gray-700 ${period.tint} ${
                 isPast ? "opacity-60" : ""
               }`}
               style={{
@@ -379,7 +379,6 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
                     }
                     onOpenTask(task.id);
                   }}
-                  muted={isPast}
                   onMovePointer={(e) => beginPointer(e, block, "move")}
                   onResizePointer={(e) => beginPointer(e, block, "resize")}
                   onRemove={() => removeSchedule(block.id)}
@@ -394,7 +393,6 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
                 subtitle="só neste dia"
                 accent={EVENT_SIGNALS[block.color || "primary"].bar}
                 kind="free"
-                muted={isPast}
                 onOpen={() => {
                   if (didDrag.current) {
                     didDrag.current = false;
@@ -463,7 +461,6 @@ function ScheduleCard({
   subtitle,
   accent,
   kind,
-  muted,
   onOpen,
   onMovePointer,
   onResizePointer,
@@ -474,7 +471,6 @@ function ScheduleCard({
   subtitle?: string;
   accent: string;
   kind: "task" | "free";
-  muted?: boolean;
   onOpen: () => void;
   onMovePointer: (e: React.PointerEvent) => void;
   onResizePointer: (e: React.PointerEvent) => void;
@@ -487,7 +483,7 @@ function ScheduleCard({
         kind === "free"
           ? "border border-dashed border-gray-300 bg-white/90 dark:border-gray-600 dark:bg-gray-900/90"
           : "border border-indigo-100 bg-white dark:bg-gray-900 dark:border-gray-700"
-      } ${muted ? "opacity-70" : ""}`}
+      }`}
       style={{ top: minutesToPx(block.startMinutes), height }}
       onPointerDown={onMovePointer}
       onClick={(e) => {
@@ -498,14 +494,12 @@ function ScheduleCard({
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${accent}`} />
       <div className="pl-2.5 pr-6 py-1 cursor-grab active:cursor-grabbing h-full">
         <p
-          className={`text-xs font-semibold truncate leading-tight ${
-            muted ? "text-gray-400 dark:text-gray-500" : "text-gray-800 dark:text-white/90"
-          }`}
+          className="text-xs font-semibold text-black truncate leading-tight"
         >
           {title}
         </p>
         {height >= 36 && (
-          <p className="text-[10px] text-gray-400 truncate">
+          <p className="text-[10px] text-black truncate">
             {minutesToTimeLabel(block.startMinutes)} – {minutesToTimeLabel(block.startMinutes + block.durationMinutes)}
             {subtitle ? ` · ${subtitle}` : ""}
           </p>

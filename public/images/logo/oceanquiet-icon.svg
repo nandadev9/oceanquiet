@@ -1,0 +1,8 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">OceanQuiet</title>
+  <rect x="2" y="2" width="36" height="36" rx="11" fill="#103B53"/>
+  <circle cx="26.5" cy="12" r="4" fill="#F8D68A"/>
+  <circle cx="28.4" cy="10.5" r="4" fill="#103B53"/>
+  <path d="M9 22.5C11.1 20.5 13.2 20.5 15.3 22.5C17.4 24.5 19.5 24.5 21.6 22.5C23.7 20.5 25.8 20.5 27.9 22.5C30 24.5 31.3 24.3 32 23.6" stroke="#5EEAD4" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M9 28C11.1 26 13.2 26 15.3 28C17.4 30 19.5 30 21.6 28C23.7 26 25.8 26 27.9 28C30 30 31.3 29.8 32 29.1" stroke="#B8F3EA" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

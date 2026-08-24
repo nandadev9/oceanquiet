@@ -83,20 +83,20 @@ const AppHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
 
-          <Link href="/" className="lg:hidden">
+          <Link href="/rotina" className="lg:hidden" aria-label="OceanQuiet">
             <Image
-              width={154}
-              height={32}
+              width={196}
+              height={40}
               className="dark:hidden"
-              src="./images/logo/logo.svg"
-              alt="Logo"
+              src="/images/logo/oceanquiet-logo.svg"
+              alt="OceanQuiet"
             />
             <Image
-              width={154}
-              height={32}
+              width={196}
+              height={40}
               className="hidden dark:block"
-              src="./images/logo/logo-dark.svg"
-              alt="Logo"
+              src="/images/logo/oceanquiet-logo-dark.svg"
+              alt="OceanQuiet"
             />
           </Link>
 

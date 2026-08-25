@@ -1,5 +1,11 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import OceanHome from "@/components/home/OceanHome";
 
-export default function Home() {
-  redirect("/rotina");
+export const metadata: Metadata = {
+  title: "Início",
+  description: "Seu ponto de partida no OceanQuiet.",
+};
+
+export default function HomePage() {
+  return <OceanHome />;
 }

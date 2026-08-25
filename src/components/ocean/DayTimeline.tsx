@@ -41,6 +41,8 @@ import {
   timelineHours,
   totalTimelineHeight,
 } from "@/lib/ocean/timeline";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/i18n/translations";
 import { TASK_DRAG_MIME } from "@/lib/ocean/types";
 import type { EventColor, ScheduleBlock } from "@/lib/ocean/types";
 import SlotModal from "./SlotModal";
@@ -65,6 +67,7 @@ type SlotDraft = {
 };
 
 export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimelineProps) {
+  const { t, dateLocale } = useLanguage();
   const {
     getTask,
     getCategory,
@@ -146,7 +149,7 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
     const task = taskId ? getTask(taskId) : undefined;
     setLive({
       mode: "ghost",
-      title: task?.title || "Tarefa",
+      title: task?.title || t("routine.dragTask"),
       start,
       duration,
     });
@@ -196,29 +199,29 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
       <header className="flex items-center justify-between gap-2 px-4 py-3.5 border-b border-gray-100 dark:border-gray-800">
         <div className="min-w-0">
           <h2 className={`text-sm font-bold ${isPast ? "text-gray-400 dark:text-gray-500" : "text-gray-800 dark:text-white/90"}`}>
-            Rotina do dia
+            {t("routine.dailyRoutine")}
           </h2>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
             onClick={() => openNewSlot(isToday ? nowMinutes() : 9 * 60, 30)}
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-white/5"
-            aria-label="Novo evento"
-            title="Novo evento"
+            aria-label={t("routine.newEvent")}
+            title={t("routine.newEvent")}
           >
             <Plus size={16} />
           </button>
           <button
             onClick={() => onDateChange(addDaysISO(date, -1))}
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-white/5"
-            aria-label="Dia anterior"
+            aria-label={t("routine.previousDay")}
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={() => onDateChange(addDaysISO(date, 1))}
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-white/5"
-            aria-label="Próximo dia"
+            aria-label={t("routine.nextDay")}
           >
             <ChevronRight size={16} />
           </button>
@@ -227,14 +230,14 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
               isPast ? "text-gray-400" : isToday ? "text-gray-800 dark:text-white/90" : "text-gray-600 dark:text-gray-300"
             }`}
           >
-            {formatLongDate(date)}
+            {formatLongDate(date, dateLocale)}
           </span>
           {!isToday && (
             <button
               onClick={() => onDateChange(todayISO())}
               className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 px-2 whitespace-nowrap"
             >
-              Ir para hoje
+              {t("routine.goToToday")}
               <ArrowRight size={12} />
             </button>
           )}
@@ -244,14 +247,18 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
       {previousBusy && (
         <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-dashed border-gray-200 bg-gray-50/80 dark:border-gray-800 dark:bg-white/[0.02]">
           <p className="text-xs text-gray-500 min-w-0 truncate">
-            Este dia está vazio. Dá para copiar a rotina de {previousBusy === addDaysISO(date, -1) ? "ontem" : formatLongDate(previousBusy)}.
+            {t("routine.emptyDay", {
+              date: previousBusy === addDaysISO(date, -1)
+                ? t("routine.yesterday")
+                : formatLongDate(previousBusy, dateLocale),
+            })}
           </p>
           <button
             onClick={() => copyScheduleToDate(previousBusy, date)}
             className="inline-flex items-center gap-1.5 flex-shrink-0 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-xs font-bold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-500/30 dark:bg-transparent dark:hover:bg-indigo-500/10"
           >
             <Copy size={12} />
-            Copiar
+            {t("routine.copy")}
           </button>
         </div>
       )}
@@ -308,7 +315,9 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
                 style={{ height: PERIOD_HEADER_PX - 2 }}
               >
                 <PeriodIcon id={period.id} />
-                <span className={isPast ? "text-gray-300 dark:text-gray-600" : ""}>{period.label}</span>
+                <span className={isPast ? "text-gray-300 dark:text-gray-600" : ""}>
+                  {t(`routine.period.${period.id}` as TranslationKey)}
+                </span>
               </span>
             </div>
           ))}
@@ -389,8 +398,8 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
               <ScheduleCard
                 key={block.id}
                 block={view}
-                title={block.title || "Evento"}
-                subtitle="só neste dia"
+                title={block.title || t("calendar.addEvent").replace(" +", "")}
+                subtitle={t("routine.onlyThisDay")}
                 accent={EVENT_SIGNALS[block.color || "primary"].bar}
                 kind="free"
                 onOpen={() => {
@@ -419,7 +428,7 @@ export default function DayTimeline({ date, onDateChange, onOpenTask }: DayTimel
         key={slotDraft ? `${slotDraft.id ?? "new"}-${slotDraft.startMinutes}` : "closed"}
         isOpen={Boolean(slotDraft)}
         onClose={() => setSlotDraft(null)}
-        dateLabel={formatLongDate(date)}
+        dateLabel={formatLongDate(date, dateLocale)}
         startMinutes={slotDraft?.startMinutes ?? 0}
         durationMinutes={slotDraft?.durationMinutes ?? 30}
         title={slotDraft?.title ?? ""}

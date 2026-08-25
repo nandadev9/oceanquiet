@@ -9,9 +9,11 @@ import {
   getSession,
   subscribeToSession,
 } from "@/lib/auth/session";
+import { useI18n } from "@/context/LanguageContext";
 
 export default function UserDropdown() {
   const router = useRouter();
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const session = useSyncExternalStore(
@@ -53,7 +55,7 @@ export default function UserDropdown() {
             width={44}
             height={44}
             src="/images/user/owner.jpg"
-            alt="User"
+            alt={t("profile.avatarAlt")}
           />
         </span>
 
@@ -116,7 +118,7 @@ export default function UserDropdown() {
                   fill=""
                 />
               </svg>
-              Edit profile
+              {t("dropdown.profile")}
             </DropdownItem>
           </li>
           <li>
@@ -141,7 +143,7 @@ export default function UserDropdown() {
                   fill=""
                 />
               </svg>
-              Account settings
+              {t("dropdown.settings")}
             </DropdownItem>
           </li>
           <li>
@@ -166,7 +168,7 @@ export default function UserDropdown() {
                   fill=""
                 />
               </svg>
-              Support
+              {t("dropdown.support")}
             </DropdownItem>
           </li>
         </ul>
@@ -191,7 +193,7 @@ export default function UserDropdown() {
               fill=""
             />
           </svg>
-          {isSigningOut ? "Saindo…" : "Sair da conta"}
+          {isSigningOut ? t("dropdown.signingOut") : t("dropdown.signOut")}
         </button>
       </Dropdown>
     </div>

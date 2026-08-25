@@ -7,10 +7,12 @@ import OceanAssistant from "@/components/ocean/OceanAssistant";
 import { OceanPage } from "@/components/ocean/OceanStyles";
 import PriorityColumn from "@/components/ocean/PriorityColumn";
 import TaskModal from "@/components/ocean/TaskModal";
+import { useLanguage } from "@/context/LanguageContext";
 import { useTasks } from "@/context/TasksContext";
 import { todayISO } from "@/lib/ocean/dates";
 
 export default function RotinaPage() {
+  const { t } = useLanguage();
   const { ready, tasksByBoard } = useTasks();
   const weeklyCount = tasksByBoard("weekly").length;
   const dailyCount = tasksByBoard("daily").length;
@@ -34,19 +36,19 @@ export default function RotinaPage() {
   return (
     <OceanPage>
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-extrabold text-gray-800 tracking-tight dark:text-white/90">Rotina</h1>
+        <h1 className="text-xl font-extrabold text-gray-800 tracking-tight dark:text-white/90">{t("routine.title")}</h1>
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Home size={12} />
-          <span>Home</span>
+          <span>{t("navigation.home")}</span>
           <ChevronRight size={12} />
-          <span className="text-gray-500 font-semibold dark:text-gray-300">Rotina</span>
+          <span className="text-gray-500 font-semibold dark:text-gray-300">{t("routine.title")}</span>
         </div>
       </div>
 
       <OceanAssistant>
         {weeklyCount === 0 && dailyCount === 0
-          ? "A semana ainda está em branco. Priorize um card em Tarefas (↑) e ele aparece no foco da semana."
-          : "Esta é a sua semana. Puxe para hoje só o que cabe neste dia. Se algo parecer enorme, quebre em pedaços. O próximo passo já é o bastante."}
+          ? t("routine.assistantEmpty")
+          : t("routine.assistant")}
       </OceanAssistant>
 
       <div className="xl:h-[calc(100vh-180px)] min-h-[560px] rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03]">
@@ -54,14 +56,14 @@ export default function RotinaPage() {
           <DayTimeline date={date} onDateChange={setDate} onOpenTask={openTask} />
           <PriorityColumn
             board="daily"
-            title="Foco de hoje"
-            emptyText="Puxe um card da semana para hoje."
+            title={t("routine.focusToday")}
+            emptyText={t("routine.emptyFocusToday")}
             onOpenTask={openTask}
           />
           <PriorityColumn
             board="weekly"
-            title="Foco da semana"
-            emptyText="Priorize um card em Tarefas (↑)."
+            title={t("routine.focusWeekly")}
+            emptyText={t("routine.emptyFocusWeekly")}
             onOpenTask={openTask}
           />
         </div>

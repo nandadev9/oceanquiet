@@ -38,9 +38,9 @@ export function formatDueLabel(iso: string | null): string | null {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }
 
-export function formatLongDate(iso: string): string {
+export function formatLongDate(iso: string, locale = "pt-BR"): string {
   const d = parseISODate(iso);
-  const s = d.toLocaleDateString("pt-BR", {
+  const s = d.toLocaleDateString(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",

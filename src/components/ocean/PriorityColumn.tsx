@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import { useTasks } from "@/context/TasksContext";
 import { TASK_DRAG_MIME, type TaskBoard } from "@/lib/ocean/types";
 import TaskCard from "./TaskCard";
@@ -15,9 +16,10 @@ interface PriorityColumnProps {
 export default function PriorityColumn({
   board,
   title,
-  emptyText = "Solte um card aqui.",
+  emptyText,
   onOpenTask,
 }: PriorityColumnProps) {
+  const { t } = useLanguage();
   const { tasksByBoard, setBoard } = useTasks();
   const tasks = tasksByBoard(board);
   const [isOver, setIsOver] = useState(false);
@@ -54,7 +56,9 @@ export default function PriorityColumn({
       </header>
       <div className="oq-scroll flex-1 overflow-y-auto p-3 space-y-2.5 min-h-[120px]">
         {tasks.length === 0 && (
-          <p className="text-xs text-gray-400 text-center px-3 py-8 leading-relaxed">{emptyText}</p>
+          <p className="text-xs text-gray-400 text-center px-3 py-8 leading-relaxed">
+            {emptyText ?? t("routine.dropTaskHere")}
+          </p>
         )}
         {tasks.map((task) => (
           <TaskCard key={task.id} task={task} variant="priority" onOpen={onOpenTask} />

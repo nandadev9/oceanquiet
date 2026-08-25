@@ -20,23 +20,55 @@ import {
   Target,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/LanguageContext";
 import { useTasks } from "@/context/TasksContext";
+import type { Locale, TranslationKey } from "@/i18n/translations";
 import WeatherCard from "./WeatherCard";
 
-const DAILY_NOTES = [
-  "Você não precisa resolver a semana inteira hoje. Escolha o próximo passo possível.",
-  "Um ritmo gentil também é um ritmo produtivo. Deixe espaço entre uma coisa e outra.",
-  "Quando tudo parecer urgente, volte ao corpo: água, ar, uma pausa e só então decida.",
-  "Começar pequeno não diminui a importância do que você quer construir.",
-  "Organizar a mente também pode ser tirar uma única tarefa da frente, sem pressa.",
-  "Seu foco não precisa ser perfeito para ser valioso. Proteja alguns minutos de presença.",
-  "Há dias de avançar e dias de sustentar. Os dois fazem parte da jornada.",
-  "Uma lista curta pode ser mais acolhedora que uma lista completa.",
-  "O que cabe em cinco minutos merece existir: pequenos começos criam movimento.",
-  "Se o plano mudar, você não falhou. Apenas está encontrando outro caminho.",
-  "Terminar uma pequena tarefa é uma forma de dizer ao seu cérebro: eu consigo continuar.",
-  "Cuide do seu amanhã deixando uma coisa um pouco mais leve para a pessoa que você será.",
-] as const;
+const DAILY_NOTES: Record<Locale, readonly string[]> = {
+  "pt-BR": [
+    "Você não precisa resolver a semana inteira hoje. Escolha o próximo passo possível.",
+    "Um ritmo gentil também é um ritmo produtivo. Deixe espaço entre uma coisa e outra.",
+    "Quando tudo parecer urgente, volte ao corpo: água, ar, uma pausa e só então decida.",
+    "Começar pequeno não diminui a importância do que você quer construir.",
+    "Organizar a mente também pode ser tirar uma única tarefa da frente, sem pressa.",
+    "Seu foco não precisa ser perfeito para ser valioso. Proteja alguns minutos de presença.",
+    "Há dias de avançar e dias de sustentar. Os dois fazem parte da jornada.",
+    "Uma lista curta pode ser mais acolhedora que uma lista completa.",
+    "O que cabe em cinco minutos merece existir: pequenos começos criam movimento.",
+    "Se o plano mudar, você não falhou. Apenas está encontrando outro caminho.",
+    "Terminar uma pequena tarefa é uma forma de dizer ao seu cérebro: eu consigo continuar.",
+    "Cuide do seu amanhã deixando uma coisa um pouco mais leve para a pessoa que você será.",
+  ],
+  en: [
+    "You do not need to solve the whole week today. Choose the next possible step.",
+    "A gentle pace is productive too. Leave room between one thing and the next.",
+    "When everything feels urgent, return to your body: water, air, a pause, then decide.",
+    "Starting small does not make what you want to build any less important.",
+    "Organizing your mind can be simply moving one task out of the way, without rushing.",
+    "Your focus does not need to be perfect to be valuable. Protect a few present minutes.",
+    "Some days are for moving forward and some are for holding steady. Both belong to the journey.",
+    "A short list can feel more welcoming than a complete list.",
+    "What fits in five minutes deserves to exist: small starts create movement.",
+    "If the plan changes, you have not failed. You are simply finding another path.",
+    "Finishing a small task tells your brain: I can keep going.",
+    "Care for tomorrow by making one thing a little lighter for the person you will be.",
+  ],
+  es: [
+    "No necesitas resolver toda la semana hoy. Elige el próximo paso posible.",
+    "Un ritmo amable también es productivo. Deja espacio entre una cosa y otra.",
+    "Cuando todo parezca urgente, vuelve al cuerpo: agua, aire, una pausa y después decide.",
+    "Empezar poco a poco no disminuye la importancia de lo que quieres construir.",
+    "Organizar la mente también puede ser quitar una sola tarea del camino, sin prisa.",
+    "Tu enfoque no necesita ser perfecto para ser valioso. Protege unos minutos de presencia.",
+    "Hay días para avanzar y días para sostenerse. Ambos forman parte del camino.",
+    "Una lista corta puede ser más acogedora que una lista completa.",
+    "Lo que cabe en cinco minutos merece existir: los comienzos pequeños crean movimiento.",
+    "Si el plan cambia, no has fallado. Solo estás encontrando otro camino.",
+    "Terminar una pequeña tarea le dice a tu cerebro: puedo continuar.",
+    "Cuida tu mañana haciendo una cosa un poco más ligera para la persona que serás.",
+  ],
+};
 
 type QuickLink = {
   href: string;
@@ -55,15 +87,14 @@ function getDayPhase(hour: number | null): DayPhase {
   return "night";
 }
 
-function GreetingSkyScene({ phase }: { phase: DayPhase }) {
+function GreetingSkyScene({ phase, ariaLabel }: { phase: DayPhase; ariaLabel: string }) {
   const isNight = phase === "night";
-  const isAfternoon = phase === "afternoon";
 
   return (
     <div
       className={`ocean-greeting-scene ocean-greeting-scene--${phase}`}
       role="img"
-      aria-label={isNight ? "Uma lua crescente entre estrelas" : isAfternoon ? "Um sol alaranjado no entardecer" : "Um sol brilhante no céu da manhã"}
+      aria-label={ariaLabel}
     >
       <div className="ocean-greeting-scene__glow" />
       {!isNight ? (
@@ -97,16 +128,16 @@ function GreetingSkyScene({ phase }: { phase: DayPhase }) {
   );
 }
 
-function getGreeting(hour: number | null) {
-  if (hour === null) return "Olá";
-  if (hour < 12) return "Bom dia";
-  if (hour < 18) return "Boa tarde";
-  return "Boa noite";
+function getGreeting(hour: number | null, t: (key: TranslationKey) => string) {
+  if (hour === null) return t("home.greeting.hello");
+  if (hour < 12) return t("home.greeting.morning");
+  if (hour < 18) return t("home.greeting.afternoon");
+  return t("home.greeting.night");
 }
 
-function firstName(name?: string | null) {
+function firstName(name: string | null | undefined, fallback: string) {
   const value = name?.trim().split(/\s+/)[0];
-  return value || "você";
+  return value || fallback;
 }
 
 function localDateKey(date: Date) {
@@ -116,8 +147,8 @@ function localDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function readableDate(date: Date) {
-  return new Intl.DateTimeFormat("pt-BR", {
+function readableDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -166,10 +197,11 @@ function QuickAccessCard({ item }: { item: QuickLink }) {
 
 export default function OceanHome() {
   const { user } = useAuth();
+  const { dateLocale, locale, t } = useI18n();
   const { ready, activeTasks, categories, schedule } = useTasks();
   const [hour, setHour] = useState<number | null>(null);
   const [today, setToday] = useState("");
-  const [todayLabel, setTodayLabel] = useState("Hoje");
+  const [todayLabel, setTodayLabel] = useState("");
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [entered, setEntered] = useState(false);
 
@@ -178,12 +210,12 @@ export default function OceanHome() {
       const now = new Date();
       setHour(now.getHours());
       setToday(localDateKey(now));
-      setTodayLabel(readableDate(now));
-      setQuoteIndex(now.getDate() % DAILY_NOTES.length);
+      setTodayLabel(readableDate(now, dateLocale));
+      setQuoteIndex(now.getDate() % DAILY_NOTES[locale].length);
       setEntered(true);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, []);
+  }, [dateLocale, locale]);
 
   const overview = useMemo(() => {
     const active = activeTasks.filter((task) => task.status !== "done");
@@ -208,32 +240,32 @@ export default function OceanHome() {
   const quickLinks: QuickLink[] = [
     {
       href: "/rotina",
-      label: "Minha rotina",
-      description: overview.daily.length ? `${overview.daily.length} prioridade${overview.daily.length === 1 ? "" : "s"} para hoje` : "Dê um ritmo gentil ao seu dia",
+      label: t("home.quick.routine"),
+      description: overview.daily.length ? t(overview.daily.length === 1 ? "home.quick.routineOne" : "home.quick.routineMany", { count: overview.daily.length }) : t("home.quick.routineNone"),
       icon: CalendarDays,
       iconClassName: "text-teal-700 dark:text-teal-300",
       iconWrapClassName: "bg-teal-50 dark:bg-teal-400/10",
     },
     {
       href: "/tasks",
-      label: "Minhas tarefas",
-      description: overview.active.length ? `${overview.active.length} tarefa${overview.active.length === 1 ? "" : "s"} aguardando você` : "Tudo tranquilo por aqui",
+      label: t("home.quick.tasks"),
+      description: overview.active.length ? t(overview.active.length === 1 ? "home.quick.tasksOne" : "home.quick.tasksMany", { count: overview.active.length }) : t("home.quick.tasksNone"),
       icon: ListChecks,
       iconClassName: "text-blue-700 dark:text-blue-300",
       iconWrapClassName: "bg-blue-50 dark:bg-blue-400/10",
     },
     {
       href: "/foco",
-      label: "Foco agora",
-      description: "Reserve um bloco para o que importa",
+      label: t("home.quick.focus"),
+      description: t("home.quick.focusDescription"),
       icon: Target,
       iconClassName: "text-violet-700 dark:text-violet-300",
       iconWrapClassName: "bg-violet-50 dark:bg-violet-400/10",
     },
     {
       href: "/jornada",
-      label: "Minha jornada",
-      description: "Escreva, respire e perceba seu dia",
+      label: t("home.quick.journey"),
+      description: t("home.quick.journeyDescription"),
       icon: BookHeart,
       iconClassName: "text-rose-700 dark:text-rose-300",
       iconWrapClassName: "bg-rose-50 dark:bg-rose-400/10",
@@ -250,6 +282,7 @@ export default function OceanHome() {
       <Sunrise size={18} />
     );
   const dayPhase = getDayPhase(hour);
+  const sceneLabel = t(`home.scene.${dayPhase}` as TranslationKey);
   const heroTheme = {
     morning: "from-[#092d43] via-[#0b6476] to-[#2e92ab]",
     afternoon: "from-[#162b4d] via-[#9a514b] to-[#df8d4c]",
@@ -259,7 +292,7 @@ export default function OceanHome() {
   return (
     <main className="mx-auto max-w-7xl pb-10">
       <section className={`relative overflow-hidden rounded-[2rem] bg-gradient-to-br ${heroTheme} px-6 py-7 text-white shadow-xl shadow-teal-950/15 transition-all duration-700 motion-reduce:transition-none md:px-8 md:py-8 ${transitionClass}`}>
-        <GreetingSkyScene phase={dayPhase} />
+        <GreetingSkyScene phase={dayPhase} ariaLabel={sceneLabel} />
         <div className="pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full bg-cyan-200/20 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 left-1/3 h-32 w-2/3 rounded-full bg-teal-300/10 blur-3xl" />
         <div className="relative z-10 max-w-xl py-1 pr-16 sm:pr-0">
@@ -267,21 +300,21 @@ export default function OceanHome() {
             {greetingIcon}
             <span>{todayLabel}</span>
           </div>
-          <p className="mt-6 text-sm font-medium text-cyan-50/70">{getGreeting(hour)},</p>
+          <p className="mt-6 text-sm font-medium text-cyan-50/70">{getGreeting(hour, t)},</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
-            {firstName(user?.name)} <span className="inline-block origin-bottom-left transition-transform duration-300 hover:rotate-12">✦</span>
+            {firstName(user?.name, t("home.greeting.guest"))} <span className="inline-block origin-bottom-left transition-transform duration-300 hover:rotate-12">✦</span>
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-cyan-50/80 sm:text-base">
-            Seu espaço para organizar o que importa e cuidar do seu ritmo, um dia de cada vez.
+            {t("home.description")}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/rotina" className="group inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-slate-900 shadow-lg shadow-slate-950/10 transition-all hover:-translate-y-0.5 hover:bg-cyan-50">
-              Ver minha rotina
+              {t("home.openRoutine")}
               <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link href="/jornada" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/[0.08] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/[0.15]">
               <BookHeart size={17} />
-              Abrir diário
+              {t("home.openJournal")}
             </Link>
           </div>
         </div>
@@ -295,8 +328,8 @@ export default function OceanHome() {
         <article className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/80 lg:col-span-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-bold text-slate-900 dark:text-white">O seu dia, com calma</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Um retrato breve para ajudar você a começar.</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{t("home.snapshot.title")}</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("home.snapshot.description")}</p>
             </div>
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-teal-50 text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
               <CircleDot size={20} />
@@ -305,19 +338,19 @@ export default function OceanHome() {
           <div className="mt-7 grid grid-cols-3 gap-3">
             <div className="rounded-2xl bg-slate-50 px-3 py-3 dark:bg-white/[0.045]">
               <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{overview.daily.length}</p>
-              <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">no foco de hoje</p>
+              <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">{t("home.snapshot.focusToday")}</p>
             </div>
             <div className="rounded-2xl bg-slate-50 px-3 py-3 dark:bg-white/[0.045]">
               <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{overview.scheduledToday.length}</p>
-              <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">bloco{overview.scheduledToday.length === 1 ? "" : "s"} reservado{overview.scheduledToday.length === 1 ? "" : "s"}</p>
+              <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">{t(overview.scheduledToday.length === 1 ? "home.snapshot.reservedOne" : "home.snapshot.reservedMany")}</p>
             </div>
             <div className="rounded-2xl bg-slate-50 px-3 py-3 dark:bg-white/[0.045]">
               <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{overview.progressDone}</p>
-              <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">feita{overview.progressDone === 1 ? "" : "s"} hoje</p>
+              <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">{t(overview.progressDone === 1 ? "home.snapshot.doneOne" : "home.snapshot.doneMany")}</p>
             </div>
           </div>
           <Link href="/tasks" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-teal-700 transition-colors hover:text-teal-600 dark:text-teal-300 dark:hover:text-teal-200">
-            Organizar tarefas <ChevronRight size={16} />
+            {t("home.organizeTasks")} <ChevronRight size={16} />
           </Link>
         </article>
 
@@ -328,16 +361,16 @@ export default function OceanHome() {
             </span>
             <button
               type="button"
-              onClick={() => setQuoteIndex((index) => (index + 1) % DAILY_NOTES.length)}
+              onClick={() => setQuoteIndex((index) => (index + 1) % DAILY_NOTES[locale].length)}
               className="rounded-lg px-2 py-1 text-xs font-semibold text-violet-700 transition-colors hover:bg-white/75 dark:text-violet-300 dark:hover:bg-white/10"
-              aria-label="Ver outra dica"
+              aria-label={t("home.tip.next")}
             >
-              Outra dica
+              {t("home.tip.next")}
             </button>
           </div>
-          <p className="mt-7 text-sm font-bold text-slate-900 dark:text-white">Para lembrar agora</p>
+          <p className="mt-7 text-sm font-bold text-slate-900 dark:text-white">{t("home.tip.title")}</p>
           <p key={quoteIndex} className="mt-2 text-sm leading-6 text-slate-600 animate-in fade-in duration-300 dark:text-slate-300">
-            “{DAILY_NOTES[quoteIndex]}”
+            “{DAILY_NOTES[locale][quoteIndex]}”
           </p>
         </article>
       </section>
@@ -346,8 +379,8 @@ export default function OceanHome() {
         <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-base font-bold text-slate-900 dark:text-white">Próximas a ganhar atenção</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Uma lista curta para não carregar tudo de uma vez.</p>
+              <p className="text-base font-bold text-slate-900 dark:text-white">{t("home.attention.title")}</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("home.attention.description")}</p>
             </div>
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
               <Clock3 size={20} />
@@ -363,12 +396,12 @@ export default function OceanHome() {
           ) : (
             <div className="mt-6 rounded-2xl bg-slate-50 px-5 py-7 text-center dark:bg-white/[0.045]">
               <CheckCircle2 className="mx-auto text-teal-500" size={28} />
-              <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Sua lista está leve por enquanto.</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Adicione uma tarefa quando algo pedir um lugar para existir.</p>
+              <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{t("home.empty.title")}</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("home.empty.description")}</p>
             </div>
           )}
           <Link href="/tasks" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-teal-700 transition-colors hover:text-teal-600 dark:text-teal-300 dark:hover:text-teal-200">
-            Ver todas as tarefas <ArrowRight size={16} />
+            {t("home.viewAllTasks")} <ArrowRight size={16} />
           </Link>
         </article>
 
@@ -379,16 +412,16 @@ export default function OceanHome() {
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-cyan-100">
               <Brain size={20} />
             </span>
-            <p className="mt-5 text-base font-bold">Seu bem-estar também tem espaço aqui.</p>
+            <p className="mt-5 text-base font-bold">{t("home.wellbeing.title")}</p>
             <p className="mt-2 max-w-md text-sm leading-6 text-cyan-50/75">
-              Faça um check-in rápido no diário. Com o tempo, seus Insights transformam pequenos registros em padrões úteis.
+              {t("home.wellbeing.description")}
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/jornada" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-slate-900 transition-all hover:-translate-y-0.5 hover:bg-cyan-50">
-                Fazer check-in <ArrowRight size={16} />
+                {t("home.wellbeing.checkIn")} <ArrowRight size={16} />
               </Link>
               <Link href="/insights" className="text-sm font-semibold text-cyan-50/85 underline-offset-4 transition-colors hover:text-white hover:underline">
-                Ver meus Insights
+                {t("home.wellbeing.insights")}
               </Link>
             </div>
           </div>
@@ -398,11 +431,11 @@ export default function OceanHome() {
       <section className={`mt-7 ${transitionClass}`} style={{ transitionDelay: "240ms" }}>
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <p className="text-base font-bold text-slate-900 dark:text-white">Aonde você quer ir agora?</p>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tudo o que você precisa, sem procurar demais.</p>
+            <p className="text-base font-bold text-slate-900 dark:text-white">{t("home.destination.title")}</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("home.destination.description")}</p>
           </div>
           <Link href="/insights" className="hidden items-center gap-1 text-sm font-bold text-teal-700 transition-colors hover:text-teal-600 sm:inline-flex dark:text-teal-300 dark:hover:text-teal-200">
-            Ver visão geral <ArrowRight size={16} />
+            {t("home.destination.overview")} <ArrowRight size={16} />
           </Link>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

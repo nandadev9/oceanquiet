@@ -3,6 +3,8 @@
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/i18n/translations";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -16,12 +18,13 @@ function getDestination(nextPath: string | null) {
 
 export default function SignInForm() {
   const { isReady, signIn, user } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const destination = useMemo(
     () => getDestination(searchParams.get("next")),
@@ -39,19 +42,19 @@ export default function SignInForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
+    setErrorKey(null);
     setIsSubmitting(true);
 
     try {
       const result = await signIn(email, password);
       if (!result.ok) {
-        setError(result.message);
+        setErrorKey(`auth.error.${result.code}` as TranslationKey);
         return;
       }
 
       router.replace(destination);
     } catch {
-      setError("Não foi possível entrar agora. Tente novamente.");
+      setErrorKey("auth.error.genericSignIn");
     } finally {
       setIsSubmitting(false);
     }
@@ -65,7 +68,7 @@ export default function SignInForm() {
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
         >
           <ChevronLeftIcon />
-          Voltar
+          {t("auth.back")}
         </Link>
       </div>
 
@@ -75,45 +78,45 @@ export default function SignInForm() {
             OceanQuiet
           </p>
           <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-            Que bom ter você de volta
+            {t("auth.signIn.title")}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Entre para continuar sua rotina com mais leveza.
+            {t("auth.signIn.description")}
           </p>
         </div>
 
         <form noValidate onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label>
-              E-mail <span className="text-error-500">*</span>
+              {t("auth.email")} <span className="text-error-500">*</span>
             </Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="voce@exemplo.com"
+              placeholder={t("auth.emailPlaceholder")}
               onChange={(event) => setEmail(event.target.value)}
-              error={Boolean(error)}
+              error={Boolean(errorKey)}
             />
           </div>
 
           <div>
             <Label>
-              Senha <span className="text-error-500">*</span>
+              {t("auth.password")} <span className="text-error-500">*</span>
             </Label>
             <div className="relative">
               <Input
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Sua senha"
+                placeholder={t("auth.passwordPlaceholder")}
                 onChange={(event) => setPassword(event.target.value)}
-                error={Boolean(error)}
+                error={Boolean(errorKey)}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
                 className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
               >
                 {showPassword ? (
@@ -125,12 +128,12 @@ export default function SignInForm() {
             </div>
           </div>
 
-          {error && (
+          {errorKey && (
             <p
               role="alert"
               className="rounded-lg border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-300"
             >
-              {error}
+              {t(errorKey)}
             </p>
           )}
 
@@ -140,23 +143,23 @@ export default function SignInForm() {
               disabled={!isReady || isSubmitting}
               className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Entrando…" : "Entrar"}
+              {isSubmitting ? t("auth.signIn.submitting") : t("auth.signIn.submit")}
             </button>
           </div>
         </form>
 
         <p className="mt-4 text-xs leading-5 text-gray-500 dark:text-gray-400">
-          Seu acesso fica salvo somente neste navegador até você sair da conta.
+          {t("auth.signIn.localSession")}
         </p>
 
         <div className="mt-5">
           <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-            Ainda não tem uma conta?{" "}
+            {t("auth.signIn.noAccount")} {" "}
             <Link
               href={signUpPath}
               className="font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400"
             >
-              Criar conta
+              {t("auth.createAccount")}
             </Link>
           </p>
         </div>

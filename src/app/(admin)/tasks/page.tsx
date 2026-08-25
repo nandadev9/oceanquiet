@@ -18,11 +18,27 @@ import OceanAssistant from "@/components/ocean/OceanAssistant";
 import { OceanPage } from "@/components/ocean/OceanStyles";
 import TaskCard from "@/components/ocean/TaskCard";
 import TaskModal from "@/components/ocean/TaskModal";
+import { useI18n } from "@/context/LanguageContext";
 import { useTasks } from "@/context/TasksContext";
+import type { Locale } from "@/i18n/translations";
 import { CAT_NAME_LIMIT, STATUS_META } from "@/lib/ocean/constants";
 import type { Category, TaskStatus } from "@/lib/ocean/types";
 
+const TASK_PAGE_COPY: Record<Locale, Record<string, string>> = {
+  "pt-BR": {
+    title: "Tarefas", assistant: "Aqui cabem todas as ideias. Você não precisa ver tudo nem fazer tudo agora. Capture primeiro, priorize depois.", all: "Todas", taskOne: "tarefa", taskMany: "tarefas", newTask: "Nova tarefa", task: "Tarefa", emptyCategory: "Nenhuma tarefa aqui ainda.", category: "Categoria", newCategory: "Nome da categoria", create: "Criar", cancel: "Cancelar", favoritesOnly: "Só favoritos", filter: "Filtrar", keyword: "Buscar por palavra-chave", due: "Prazo", withDue: "Com prazo", withoutDue: "Sem prazo", status: "Status", todo: "A fazer", doing: "Fazendo", done: "Feito", blocked: "Bloqueado", more: "Mais opções", rename: "Renomear", delete: "Excluir", save: "Salvar", removeCategory: "Essa categoria tem {count} tarefa(s). Excluir a categoria envia essas tarefas para a lixeira. Continuar?", taskTitle: "Título da tarefa",
+  },
+  en: {
+    title: "Tasks", assistant: "All ideas can live here. You do not need to see everything or do everything right now. Capture first, prioritize later.", all: "All", taskOne: "task", taskMany: "tasks", newTask: "New task", task: "Task", emptyCategory: "No tasks here yet.", category: "Category", newCategory: "Category name", create: "Create", cancel: "Cancel", favoritesOnly: "Favorites only", filter: "Filter", keyword: "Search by keyword", due: "Due date", withDue: "With due date", withoutDue: "Without due date", status: "Status", todo: "To do", doing: "In progress", done: "Done", blocked: "Blocked", more: "More options", rename: "Rename", delete: "Delete", save: "Save", removeCategory: "This category has {count} task(s). Deleting it sends those tasks to the trash. Continue?", taskTitle: "Task title",
+  },
+  es: {
+    title: "Tareas", assistant: "Aquí caben todas las ideas. No necesitas ver ni hacer todo ahora. Captura primero, prioriza después.", all: "Todas", taskOne: "tarea", taskMany: "tareas", newTask: "Nueva tarea", task: "Tarea", emptyCategory: "Aún no hay tareas aquí.", category: "Categoría", newCategory: "Nombre de la categoría", create: "Crear", cancel: "Cancelar", favoritesOnly: "Solo favoritos", filter: "Filtrar", keyword: "Buscar por palabra clave", due: "Plazo", withDue: "Con plazo", withoutDue: "Sin plazo", status: "Estado", todo: "Por hacer", doing: "En curso", done: "Hecho", blocked: "Bloqueado", more: "Más opciones", rename: "Renombrar", delete: "Eliminar", save: "Guardar", removeCategory: "Esta categoría tiene {count} tarea(s). Al eliminarla, esas tareas irán a la papelera. ¿Continuar?", taskTitle: "Título de la tarea",
+  },
+};
+
 export default function TarefasPage() {
+  const { locale, t } = useI18n();
+  const copy = TASK_PAGE_COPY[locale];
   const {
     ready,
     categories,
@@ -111,7 +127,7 @@ export default function TarefasPage() {
     const count = tasksForCategory(catId).length;
     if (count > 0) {
       const ok = window.confirm(
-        `Essa categoria tem ${count} tarefa(s). Excluir a categoria envia essas tarefas para a lixeira. Continuar?`
+        copy.removeCategory.replace("{count}", String(count))
       );
       if (!ok) return;
     }
@@ -196,7 +212,7 @@ export default function TarefasPage() {
               onClick={() => startAddTask(cat.id)}
               className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-300 py-2.5 text-xs font-medium text-gray-400 hover:text-indigo-600 hover:border-indigo-300 transition-colors dark:border-gray-700"
             >
-              <Plus size={13} /> Nova tarefa
+              <Plus size={13} /> {copy.newTask}
             </button>
           )}
         </div>
@@ -217,7 +233,7 @@ export default function TarefasPage() {
               if (e.key === "Enter") commitAddCategory();
               if (e.key === "Escape") setAddingCategory(false);
             }}
-            placeholder="Nome da categoria"
+            placeholder={copy.newCategory}
             className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-indigo-400 mb-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
           />
           <div className="flex items-center gap-2">
@@ -225,10 +241,10 @@ export default function TarefasPage() {
               onClick={commitAddCategory}
               className="inline-flex items-center gap-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md px-2.5 py-1.5"
             >
-              <Check size={12} /> Criar
+              <Check size={12} /> {copy.create}
             </button>
             <button onClick={() => setAddingCategory(false)} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1.5">
-              Cancelar
+              {copy.cancel}
             </button>
           </div>
         </div>
@@ -237,7 +253,7 @@ export default function TarefasPage() {
           onClick={() => setAddingCategory(true)}
           className="flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-indigo-600 transition-colors"
         >
-          <Plus size={16} /> Categoria
+          <Plus size={16} /> {copy.category}
         </button>
       )}
     </div>
@@ -264,7 +280,7 @@ export default function TarefasPage() {
               <h2 className="text-base font-bold text-gray-800 truncate dark:text-white/90">{cat.name}</h2>
             )}
             <span className="text-xs font-semibold text-gray-400 bg-gray-50 dark:bg-white/5 rounded-full px-2 py-0.5 flex-shrink-0">
-              {catTasks.length} tarefa(s)
+              {catTasks.length} {catTasks.length === 1 ? copy.taskOne : copy.taskMany}
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -272,7 +288,7 @@ export default function TarefasPage() {
               onClick={() => startAddTask(cat.id)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5"
             >
-              <Plus size={13} /> Tarefa
+              <Plus size={13} /> {copy.task}
             </button>
             <ColumnMenu
               open={openMenuFor === cat.id}
@@ -287,7 +303,7 @@ export default function TarefasPage() {
         </div>
 
         <div className="oq-scroll divide-y divide-gray-100 dark:divide-gray-800 max-h-[560px] overflow-y-auto">
-          {catTasks.length === 0 && <p className="px-5 py-8 text-sm text-gray-400 text-center">Nenhuma tarefa aqui ainda.</p>}
+          {catTasks.length === 0 && <p className="px-5 py-8 text-sm text-gray-400 text-center">{copy.emptyCategory}</p>}
           {catTasks.map((task) => (
             <TaskCard key={task.id} task={task} variant="list" showPrioritize onOpen={openTask} />
           ))}
@@ -301,13 +317,13 @@ export default function TarefasPage() {
                   if (e.key === "Enter") commitAddTask(cat.id);
                   if (e.key === "Escape") setAddingTaskFor(null);
                 }}
-                placeholder="Título da tarefa"
+                placeholder={copy.taskTitle}
                 className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder:text-gray-400 dark:text-white/90"
               />
-              <button onClick={() => commitAddTask(cat.id)} className="text-indigo-600 hover:text-indigo-700 flex-shrink-0" aria-label="Salvar">
+              <button onClick={() => commitAddTask(cat.id)} className="text-indigo-600 hover:text-indigo-700 flex-shrink-0" aria-label={copy.save}>
                 <Check size={16} />
               </button>
-              <button onClick={() => setAddingTaskFor(null)} className="text-gray-300 hover:text-gray-500 flex-shrink-0" aria-label="Cancelar">
+              <button onClick={() => setAddingTaskFor(null)} className="text-gray-300 hover:text-gray-500 flex-shrink-0" aria-label={copy.cancel}>
                 <X size={16} />
               </button>
             </div>
@@ -330,16 +346,16 @@ export default function TarefasPage() {
   return (
     <OceanPage>
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-extrabold text-gray-800 tracking-tight dark:text-white/90">Tarefas</h1>
+        <h1 className="text-xl font-extrabold text-gray-800 tracking-tight dark:text-white/90">{copy.title}</h1>
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Home size={12} />
-          <span>Home</span>
+          <span>{t("navigation.home")}</span>
           <ChevronRight size={12} />
-          <span className="text-gray-500 font-semibold dark:text-gray-300">Tarefas</span>
+          <span className="text-gray-500 font-semibold dark:text-gray-300">{copy.title}</span>
         </div>
       </div>
       <OceanAssistant>
-        Aqui cabem todas as ideias. Você não precisa ver tudo nem fazer tudo agora. Capture primeiro, priorize depois.
+        {copy.assistant}
       </OceanAssistant>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-3 mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 dark:border-gray-800 dark:bg-white/[0.03]">
@@ -350,7 +366,7 @@ export default function TarefasPage() {
               activeFilter === "all" ? "bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-white" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5"
             }`}
           >
-            Todas
+            {copy.all}
             <span className="text-xs rounded-full px-1.5 py-0.5 bg-indigo-50 text-indigo-600 font-bold dark:bg-indigo-500/15 dark:text-indigo-300">
               {filteredTasks.length}
             </span>
@@ -381,7 +397,7 @@ export default function TarefasPage() {
                 ? "border-amber-300 text-amber-600 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10"
                 : "border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5"
             }`}
-            title="Só favoritos"
+            title={copy.favoritesOnly}
           >
             <Star size={15} fill={favoritesOnly ? "currentColor" : "none"} />
           </button>
@@ -398,7 +414,7 @@ export default function TarefasPage() {
               }`}
             >
               <SlidersHorizontal size={15} />
-              Filtrar
+              {copy.filter}
             </button>
             {showFilterMenu && (
               <div
@@ -410,13 +426,13 @@ export default function TarefasPage() {
                   <input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar por palavra-chave"
+                    placeholder={copy.keyword}
                     className="bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400 w-full dark:text-white/90"
                   />
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Prazo</p>
-                  {([["all", "Todas"], ["with", "Com prazo"], ["without", "Sem prazo"]] as const).map(([val, label]) => (
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">{copy.due}</p>
+                  {([["all", copy.all], ["with", copy.withDue], ["without", copy.withoutDue]] as const).map(([val, label]) => (
                     <label key={val} className="flex items-center gap-2 px-1 py-1 text-sm text-gray-600 cursor-pointer dark:text-gray-300">
                       <input
                         type="radio"
@@ -430,7 +446,7 @@ export default function TarefasPage() {
                   ))}
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Status</p>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">{copy.status}</p>
                   <label className="flex items-center gap-2 px-1 py-1 text-sm text-gray-600 cursor-pointer dark:text-gray-300">
                     <input
                       type="radio"
@@ -439,7 +455,7 @@ export default function TarefasPage() {
                       onChange={() => setStatusFilter("all")}
                       className="text-indigo-600 focus:ring-indigo-400"
                     />
-                    Todas
+                    {copy.all}
                   </label>
                   {(Object.keys(STATUS_META) as TaskStatus[]).map((key) => (
                     <label key={key} className="flex items-center gap-2 px-1 py-1 text-sm text-gray-600 cursor-pointer dark:text-gray-300">
@@ -450,7 +466,7 @@ export default function TarefasPage() {
                         onChange={() => setStatusFilter(key)}
                         className="text-indigo-600 focus:ring-indigo-400"
                       />
-                      {STATUS_META[key].label}
+                      {copy[key]}
                     </label>
                   ))}
                 </div>
@@ -462,7 +478,7 @@ export default function TarefasPage() {
             className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition-colors"
           >
             <Plus size={16} />
-            Nova tarefa
+            {copy.newTask}
           </button>
         </div>
       </div>
@@ -501,6 +517,8 @@ function ColumnMenu({
   onRename: () => void;
   onDelete: () => void;
 }) {
+  const { locale } = useI18n();
+  const copy = TASK_PAGE_COPY[locale];
   return (
     <div className="relative flex-shrink-0">
       <button
@@ -509,7 +527,7 @@ function ColumnMenu({
           onToggle();
         }}
         className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/5"
-        aria-label="Mais opções"
+        aria-label={copy.more}
       >
         <MoreHorizontal size={16} />
       </button>
@@ -519,10 +537,10 @@ function ColumnMenu({
           className="absolute right-0 mt-1 w-36 rounded-lg border border-gray-200 bg-white shadow-lg py-1 z-10 dark:border-gray-700 dark:bg-gray-900"
         >
           <button onClick={onRename} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5">
-            <Pencil size={13} /> Renomear
+            <Pencil size={13} /> {copy.rename}
           </button>
           <button onClick={onDelete} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10">
-            <Trash2 size={13} /> Excluir
+            <Trash2 size={13} /> {copy.delete}
           </button>
         </div>
       )}
@@ -543,6 +561,8 @@ function QuickAdd({
   onCommit: () => void;
   onCancel: () => void;
 }) {
+  const { locale } = useI18n();
+  const copy = TASK_PAGE_COPY[locale];
   return (
     <div className="rounded-xl border border-indigo-300 bg-white p-2.5 dark:bg-gray-900">
       <input
@@ -553,7 +573,7 @@ function QuickAdd({
           if (e.key === "Enter") onCommit();
           if (e.key === "Escape") onCancel();
         }}
-        placeholder="Título da tarefa"
+        placeholder={copy.taskTitle}
         className="w-full text-sm bg-transparent outline-none text-gray-700 placeholder:text-gray-400 dark:text-white/90"
       />
       <div className="flex items-center gap-2 mt-2">
@@ -561,10 +581,10 @@ function QuickAdd({
           onClick={onCommit}
           className="inline-flex items-center gap-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md px-2.5 py-1.5"
         >
-          <Check size={12} /> Salvar
+          <Check size={12} /> {copy.save}
         </button>
         <button onClick={onCancel} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1.5">
-          Cancelar
+          {copy.cancel}
         </button>
       </div>
     </div>

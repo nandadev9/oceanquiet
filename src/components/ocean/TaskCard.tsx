@@ -12,6 +12,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRef } from "react";
+import { useI18n } from "@/context/LanguageContext";
+import type { Locale } from "@/i18n/translations";
 import { useTasks } from "@/context/TasksContext";
 import { formatDueLabel } from "@/lib/ocean/dates";
 import { setDragTaskId } from "@/lib/ocean/drag";
@@ -20,6 +22,20 @@ import type { Task } from "@/lib/ocean/types";
 import StatusBadge from "./StatusBadge";
 
 type Variant = "board" | "list" | "priority";
+
+const CARD_COPY: Record<Locale, {
+  markDone: string;
+  favorite: string;
+  unfavorite: string;
+  prioritize: string;
+  prioritizeTitle: string;
+  archive: string;
+  archiveTitle: string;
+}> = {
+  "pt-BR": { markDone: "Marcar como feito", favorite: "Favoritar", unfavorite: "Desfavoritar", prioritize: "Priorizar: enviar para o foco da semana", prioritizeTitle: "Priorizar: vai para o Foco da semana", archive: "Arquivar", archiveTitle: "Arquivar (lixeira 30 dias)" },
+  en: { markDone: "Mark as done", favorite: "Add to favorites", unfavorite: "Remove from favorites", prioritize: "Prioritize: send to weekly focus", prioritizeTitle: "Prioritize: moves to weekly focus", archive: "Archive", archiveTitle: "Archive (trash for 30 days)" },
+  es: { markDone: "Marcar como hecha", favorite: "Agregar a favoritos", unfavorite: "Quitar de favoritos", prioritize: "Priorizar: enviar al enfoque semanal", prioritizeTitle: "Priorizar: va al enfoque semanal", archive: "Archivar", archiveTitle: "Archivar (papelera durante 30 días)" },
+};
 
 interface TaskCardProps {
   task: Task;
@@ -41,6 +57,8 @@ export default function TaskCard({
   onDragEnd,
 }: TaskCardProps) {
   const { getCategory, toggleDone, toggleFavorite, prioritize, archiveTask, setDraggingTaskId } = useTasks();
+  const { dateLocale, locale } = useI18n();
+  const copy = CARD_COPY[locale];
   const cat = getCategory(task.categoryId);
   const didDrag = useRef(false);
 
@@ -88,7 +106,7 @@ export default function TaskCard({
             toggleDone(task.id);
           }}
           className="flex-shrink-0 text-gray-300 hover:text-indigo-500"
-          aria-label="Marcar como feito"
+          aria-label={copy.markDone}
         >
           {task.status === "done" ? (
             <CircleCheck size={17} className="text-indigo-500" />
@@ -113,7 +131,7 @@ export default function TaskCard({
         {task.dueDate && (
           <span className="inline-flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
             <Calendar size={12} />
-            {formatDueLabel(task.dueDate)}
+            {formatDueLabel(task.dueDate, dateLocale)}
           </span>
         )}
         <CardActions
@@ -147,7 +165,7 @@ export default function TaskCard({
             toggleDone(task.id);
           }}
           className="mt-0.5 flex-shrink-0 text-gray-300 hover:text-indigo-500"
-          aria-label="Marcar como feito"
+          aria-label={copy.markDone}
         >
           {task.status === "done" ? (
             <CircleCheck size={16} className="text-indigo-500" />
@@ -177,7 +195,7 @@ export default function TaskCard({
             {task.dueDate && (
               <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
                 <Calendar size={11} />
-                {formatDueLabel(task.dueDate)}
+                {formatDueLabel(task.dueDate, dateLocale)}
               </span>
             )}
             {task.subtasks.length > 0 && (
@@ -219,6 +237,8 @@ function CardActions({
   onPrioritize: () => void;
   onArchive: () => void;
 }) {
+  const { locale } = useI18n();
+  const copy = CARD_COPY[locale];
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   return (
     <div className="flex flex-col items-center gap-1 flex-shrink-0">
@@ -232,8 +252,8 @@ function CardActions({
             ? "text-amber-500"
             : "text-gray-300 opacity-0 group-hover:opacity-100 hover:text-amber-500"
         } transition-opacity`}
-        aria-label={task.favorite ? "Desfavoritar" : "Favoritar"}
-        title={task.favorite ? "Desfavoritar" : "Favoritar"}
+        aria-label={task.favorite ? copy.unfavorite : copy.favorite}
+        title={task.favorite ? copy.unfavorite : copy.favorite}
       >
         <Star size={14} fill={task.favorite ? "currentColor" : "none"} />
       </button>
@@ -244,8 +264,8 @@ function CardActions({
             onPrioritize();
           }}
           className="p-0.5 rounded text-gray-300 opacity-0 group-hover:opacity-100 hover:text-indigo-600 transition-opacity"
-          aria-label="Priorizar: enviar para o foco da semana"
-          title="Priorizar: vai para o Foco da semana"
+          aria-label={copy.prioritize}
+          title={copy.prioritizeTitle}
         >
           <ArrowUp size={14} />
         </button>
@@ -256,8 +276,8 @@ function CardActions({
           onArchive();
         }}
         className="p-0.5 rounded text-gray-300 opacity-0 group-hover:opacity-100 hover:text-rose-500 transition-opacity"
-        aria-label="Arquivar"
-        title="Arquivar (lixeira 30 dias)"
+        aria-label={copy.archive}
+        title={copy.archiveTitle}
       >
         <Trash2 size={14} />
       </button>

@@ -6,9 +6,11 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br";
+import esLocale from "@fullcalendar/core/locales/es";
 import type { DateSelectArg, EventClickArg, EventDropArg } from "@fullcalendar/core";
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { useTasks } from "@/context/TasksContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { EVENT_SIGNALS } from "@/lib/ocean/constants";
 import { clampDuration, clampScheduleStart, dateFromMinutes, toISODate } from "@/lib/ocean/dates";
 import type { EventColor } from "@/lib/ocean/types";
@@ -32,6 +34,7 @@ function partsFromDate(d: Date) {
 }
 
 export default function OceanCalendar() {
+  const { locale, t } = useLanguage();
   const { schedule, getTask, getCategory, addFreeSlot, updateSchedule, removeSchedule } = useTasks();
   const calendarRef = useRef<FullCalendar>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
@@ -45,7 +48,7 @@ export default function OceanCalendar() {
         .map((block) => {
           const task = block.taskId ? getTask(block.taskId) : undefined;
           if (block.taskId && (!task || task.archivedAt)) return null;
-          const title = task?.title || block.title || "Evento";
+          const title = task?.title || block.title || t("calendar.addEvent").replace(" +", "");
           const cat = task ? getCategory(task.categoryId) : undefined;
           const color: EventColor = block.color || "primary";
           return {
@@ -63,7 +66,7 @@ export default function OceanCalendar() {
           };
         })
         .filter(Boolean),
-    [schedule, getTask, getCategory]
+    [schedule, getTask, getCategory, t]
   );
 
   const persistTimes = (id: string, start: Date | null, end: Date | null) => {
@@ -308,7 +311,7 @@ export default function OceanCalendar() {
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          locale={ptBrLocale}
+          locale={locale === "pt-BR" ? ptBrLocale : locale === "es" ? esLocale : "en"}
           initialView="dayGridMonth"
           headerToolbar={{
             left: "prev,next today addSlotButton",
@@ -316,14 +319,14 @@ export default function OceanCalendar() {
             right: "dayGridMonth,timeGridWeek,timeGridDay",
           }}
           buttonText={{
-            today: "Hoje",
-            month: "Mês",
-            week: "Semana",
-            day: "Dia",
+            today: t("calendar.today"),
+            month: t("calendar.month"),
+            week: t("calendar.week"),
+            day: t("calendar.day"),
           }}
           customButtons={{
             addSlotButton: {
-              text: "Evento +",
+              text: t("calendar.addEvent"),
               click: () => {
                 const api = calendarRef.current?.getApi();
                 const cursor = api?.getDate() ?? new Date();

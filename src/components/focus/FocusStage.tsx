@@ -14,6 +14,8 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useTasks } from "@/context/TasksContext";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/i18n/translations";
 import { AmbientEngine, playChime } from "@/lib/ocean/ambient";
 import {
   DEFAULT_FOCUS_SETTINGS,
@@ -29,6 +31,24 @@ import type { Task } from "@/lib/ocean/types";
 import OceanAssistant from "@/components/ocean/OceanAssistant";
 
 type Phase = "focus" | "break" | "longBreak";
+
+const presetLabelKeys: Record<(typeof FOCUS_PRESETS)[number]["id"], TranslationKey> = {
+  leve: "focus.preset.leve",
+  classico: "focus.preset.classico",
+  fundo: "focus.preset.fundo",
+};
+
+const themeLabelKeys: Record<FocusThemeId, { name: TranslationKey; sound: TranslationKey }> = {
+  "oceano-quieto": { name: "focus.theme.oceano-quieto.name", sound: "focus.theme.oceano-quieto.sound" },
+  "canto-no-campo": { name: "focus.theme.canto-no-campo.name", sound: "focus.theme.canto-no-campo.sound" },
+  companhia: { name: "focus.theme.companhia.name", sound: "focus.theme.companhia.sound" },
+  estrada: { name: "focus.theme.estrada.name", sound: "focus.theme.estrada.sound" },
+  cafeteria: { name: "focus.theme.cafeteria.name", sound: "focus.theme.cafeteria.sound" },
+  chuva: { name: "focus.theme.chuva.name", sound: "focus.theme.chuva.sound" },
+  "onda-de-foco": { name: "focus.theme.onda-de-foco.name", sound: "focus.theme.onda-de-foco.sound" },
+  classico: { name: "focus.theme.classico.name", sound: "focus.theme.classico.sound" },
+  silencio: { name: "focus.theme.silencio.name", sound: "focus.theme.silencio.sound" },
+};
 
 function loadSettings(): FocusSettings {
   if (typeof window === "undefined") return DEFAULT_FOCUS_SETTINGS;
@@ -55,6 +75,7 @@ function phaseDuration(phase: Phase, settings: FocusSettings) {
 }
 
 export default function FocusStage() {
+  const { t } = useLanguage();
   const { ready, tasksByBoard, getCategory, toggleDone, setStatus } = useTasks();
   const daily = tasksByBoard("daily");
   const [settings, setSettings] = useState<FocusSettings>(DEFAULT_FOCUS_SETTINGS);
@@ -217,7 +238,12 @@ export default function FocusStage() {
   const progress = total === 0 ? 0 : 1 - remaining / total;
   const radius = 112;
   const circ = 2 * Math.PI * radius;
-  const phaseLabel = phase === "focus" ? "Foco" : phase === "break" ? "Pausa" : "Descanso";
+  const phaseLabel =
+    phase === "focus"
+      ? t("focus.phase.focus")
+      : phase === "break"
+        ? t("focus.phase.break")
+        : t("focus.phase.longBreak");
   const ringColor = phase === "focus" ? "#7dd3fc" : phase === "break" ? "#6ee7b7" : "#c4b5fd";
 
   const openTasks = useMemo(() => daily.filter((t) => t.status !== "done"), [daily]);
@@ -252,19 +278,19 @@ export default function FocusStage() {
       <div className="relative z-10 flex h-full flex-col">
         <header className="flex items-start justify-between gap-3 px-4 pt-4 sm:px-6">
           <div className="min-w-0 max-w-xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/60 mb-1">Focus time</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/60 mb-1">{t("focus.heading")}</p>
             <OceanAssistant tone="onDark" className="mb-0">
               {openTasks.length === 0
-                ? "Nada no foco de hoje ainda. Monte o dia na Rotina e volte. Um card de cada vez já é o bastante."
-                : "Um card de cada vez. Escolhe o próximo passo, aperta começar. O resto pode esperar."}
+                ? t("focus.assistantEmpty")
+                : t("focus.assistant")}
             </OceanAssistant>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={() => setMuted((v) => !v)}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15"
-              aria-label={muted ? "Ativar som" : "Silenciar"}
-              title={muted ? "Ativar som" : "Silenciar"}
+              aria-label={muted ? t("focus.enableSound") : t("focus.mute")}
+              title={muted ? t("focus.enableSound") : t("focus.mute")}
             >
               {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
             </button>
@@ -273,15 +299,15 @@ export default function FocusStage() {
               className={`flex h-10 w-10 items-center justify-center rounded-xl backdrop-blur-md border border-white/15 ${
                 showSettings ? "bg-white/25" : "bg-white/10 hover:bg-white/20"
               }`}
-              aria-label="Ajustar tempos"
+              aria-label={t("focus.adjustTimes")}
             >
               <Settings2 size={18} />
             </button>
             <button
               onClick={toggleFullscreen}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15"
-              aria-label={fullscreen ? "Sair da tela inteira" : "Tela inteira"}
-              title="Tela inteira"
+              aria-label={fullscreen ? t("focus.exitFullscreen") : t("focus.fullscreen")}
+              title={fullscreen ? t("focus.exitFullscreen") : t("focus.fullscreen")}
             >
               {fullscreen ? <Minimize2 size={18} /> : <Square size={18} />}
             </button>
@@ -290,7 +316,7 @@ export default function FocusStage() {
 
         {showSettings && (
           <div className="mx-4 sm:mx-6 mt-2 rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl p-4 max-w-xl">
-            <p className="text-xs font-bold uppercase tracking-wide text-white/50 mb-3">Ritmo do pomodoro</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-white/50 mb-3">{t("focus.pomodoroPace")}</p>
             <div className="flex flex-wrap gap-2 mb-4">
               {FOCUS_PRESETS.map((p) => (
                 <button
@@ -302,13 +328,13 @@ export default function FocusStage() {
                       : "bg-white/10 border-white/15 hover:bg-white/20"
                   }`}
                 >
-                  {p.label} · {p.focus}/{p.brk}
+                  {t(presetLabelKeys[p.id])} · {p.focus}/{p.brk}
                 </button>
               ))}
             </div>
             <div className="grid grid-cols-3 gap-3 text-sm">
               <NumberField
-                label="Foco (min)"
+                label={t("focus.minutes")}
                 value={settings.focusMinutes}
                 onChange={(focusMinutes) => {
                   setSettings((s) => ({ ...s, focusMinutes }));
@@ -316,18 +342,18 @@ export default function FocusStage() {
                 }}
               />
               <NumberField
-                label="Pausa"
+                label={t("focus.break")}
                 value={settings.breakMinutes}
                 onChange={(breakMinutes) => setSettings((s) => ({ ...s, breakMinutes }))}
               />
               <NumberField
-                label="Descanso"
+                label={t("focus.longBreak")}
                 value={settings.longBreakMinutes}
                 onChange={(longBreakMinutes) => setSettings((s) => ({ ...s, longBreakMinutes }))}
               />
             </div>
             <label className="flex items-center gap-3 mt-4 text-sm text-white/80">
-              <span className="w-16 text-xs uppercase tracking-wide text-white/50">Som</span>
+              <span className="w-16 text-xs uppercase tracking-wide text-white/50">{t("focus.sound")}</span>
               <input
                 type="range"
                 min={0}
@@ -344,13 +370,13 @@ export default function FocusStage() {
         <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(260px,340px)_1fr] gap-4 px-4 sm:px-6 py-4">
           <aside className="min-h-0 rounded-2xl border border-white/15 bg-black/35 backdrop-blur-xl flex flex-col overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-sm font-bold">Foco de hoje</h2>
-              <span className="text-xs text-white/50">{openTasks.length} aberta(s)</span>
+              <h2 className="text-sm font-bold">{t("focus.todayFocus")}</h2>
+              <span className="text-xs text-white/50">{t("focus.openTasks", { count: openTasks.length })}</span>
             </div>
             <div className="oq-scroll flex-1 overflow-y-auto p-3 space-y-2">
               {daily.length === 0 && (
                 <p className="text-sm text-white/55 px-2 py-8 text-center leading-relaxed">
-                  A lista nasce na Rotina. Puxe cards para o foco de hoje e eles aparecem aqui, na mesma ordem.
+                  {t("focus.emptyTasks")}
                 </p>
               )}
               {daily.map((task, index) => (
@@ -366,7 +392,9 @@ export default function FocusStage() {
               ))}
             </div>
             <div className="px-4 py-3 border-t border-white/10 text-[11px] text-white/45">
-              {completed} bloco(s) de foco hoje
+              {completed === 1
+                ? t("focus.completedBlock", { count: completed })
+                : t("focus.completedBlocks", { count: completed })}
             </div>
           </aside>
 
@@ -392,8 +420,8 @@ export default function FocusStage() {
                 <p className="text-5xl font-semibold tabular-nums tracking-tight">{formatMmSs(remaining)}</p>
                 <p className="mt-2 text-sm text-white/70 line-clamp-2">
                   {phase === "focus"
-                    ? selected?.title || "Escolha um card à esquerda"
-                    : "Respira. O card continua te esperando."}
+                    ? selected?.title || t("focus.chooseTask")
+                    : t("focus.breathe")}
                 </p>
               </div>
             </div>
@@ -404,29 +432,29 @@ export default function FocusStage() {
                   onClick={() => setRunning(false)}
                   className="inline-flex items-center gap-2 rounded-full bg-white text-slate-900 px-6 py-2.5 text-sm font-bold hover:bg-white/90"
                 >
-                  <Pause size={16} /> Pausar
+                  <Pause size={16} /> {t("focus.pause")}
                 </button>
               ) : (
                 <button
                   onClick={handleStart}
                   className="inline-flex items-center gap-2 rounded-full bg-white text-slate-900 px-6 py-2.5 text-sm font-bold hover:bg-white/90"
                 >
-                  <Play size={16} /> Começar
+                  <Play size={16} /> {t("focus.start")}
                 </button>
               )}
               <button
                 onClick={handleSkip}
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 border border-white/15 hover:bg-white/20"
-                aria-label="Pular bloco"
-                title="Pular"
+                aria-label={t("focus.skipBlock")}
+                title={t("focus.skip")}
               >
                 <SkipForward size={16} />
               </button>
               <button
                 onClick={handleReset}
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 border border-white/15 hover:bg-white/20"
-                aria-label="Reiniciar bloco"
-                title="Reiniciar"
+                aria-label={t("focus.resetBlock")}
+                title={t("focus.reset")}
               >
                 <RotateCcw size={16} />
               </button>
@@ -454,8 +482,8 @@ export default function FocusStage() {
                   <img src={thumb} alt="" className="h-16 w-full object-cover" />
                   <span className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                   <span className="absolute bottom-1.5 left-2 right-2">
-                    <span className="block text-[11px] font-bold truncate">{item.name}</span>
-                    <span className="block text-[10px] text-white/65 truncate">{item.soundHint}</span>
+                    <span className="block text-[11px] font-bold truncate">{t(themeLabelKeys[item.id].name)}</span>
+                    <span className="block text-[10px] text-white/65 truncate">{t(themeLabelKeys[item.id].sound)}</span>
                   </span>
                 </button>
               );
@@ -506,6 +534,7 @@ function FocusTaskRow({
   onSelect: () => void;
   onToggle: () => void;
 }) {
+  const { t } = useLanguage();
   const done = task.status === "done";
   return (
     <div
@@ -521,7 +550,7 @@ function FocusTaskRow({
           onToggle();
         }}
         className="mt-0.5 flex-shrink-0 text-white/50 hover:text-white"
-        aria-label="Marcar feito"
+        aria-label={t("focus.markDone")}
       >
         {done ? <Check size={16} /> : <span className="block h-4 w-4 rounded-full border border-white/40" />}
       </button>

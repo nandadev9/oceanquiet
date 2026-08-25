@@ -485,6 +485,7 @@ function ScheduleCard({
   onResizePointer: (e: React.PointerEvent) => void;
   onRemove: () => void;
 }) {
+  const { t } = useLanguage();
   const height = blockHeightPx(block.startMinutes, block.durationMinutes);
   return (
     <div
@@ -521,8 +522,12 @@ function ScheduleCard({
         }}
         onPointerDown={(e) => e.stopPropagation()}
         className="absolute right-1 top-1 p-0.5 rounded text-gray-300 opacity-0 group-hover:opacity-100 hover:text-rose-500"
-        aria-label="Remover deste dia"
-        title={kind === "task" ? "Remover só o horário (o card continua na lista)" : "Remover este espaço"}
+        aria-label={t("routine.removeFromDay")}
+        title={
+          kind === "task"
+            ? t("routine.removeTaskSchedule")
+            : t("routine.removeFreeSlot")
+        }
       >
         <X size={12} />
       </button>

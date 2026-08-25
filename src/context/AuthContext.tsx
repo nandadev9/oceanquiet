@@ -23,9 +23,19 @@ type LocalAccount = LocalSession & {
   passwordHash: string;
 };
 
+export type AuthErrorCode =
+  | "invalidCredentials"
+  | "noSecureSignIn"
+  | "credentialsMismatch"
+  | "invalidName"
+  | "invalidEmail"
+  | "invalidPassword"
+  | "noSecureSignUp"
+  | "emailExists";
+
 type AuthResult =
   | { ok: true; user: LocalSession }
-  | { ok: false; message: string };
+  | { ok: false; code: AuthErrorCode };
 
 type AuthContextValue = {
   user: LocalSession | null;
@@ -107,13 +117,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const normalizedEmail = normalizeEmail(email);
 
       if (!/^\S+@\S+\.\S+$/.test(normalizedEmail) || !password) {
-        return { ok: false, message: "Informe um e-mail e uma senha válidos." };
+        return { ok: false, code: "invalidCredentials" };
       }
 
       if (!window.crypto?.subtle) {
         return {
           ok: false,
-          message: "Seu navegador não oferece suporte ao login seguro local.",
+          code: "noSecureSignIn",
         };
       }
 
@@ -123,7 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const passwordHash = await hashPassword(password);
 
       if (!account || account.passwordHash !== passwordHash) {
-        return { ok: false, message: "E-mail ou senha incorretos." };
+        return { ok: false, code: "credentialsMismatch" };
       }
 
       const session: LocalSession = {
@@ -155,21 +165,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const normalizedEmail = normalizeEmail(email);
 
       if (firstName.trim().length < 2 || lastName.trim().length < 2) {
-        return { ok: false, message: "Informe seu nome e sobrenome." };
+        return { ok: false, code: "invalidName" };
       }
 
       if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-        return { ok: false, message: "Informe um endereço de e-mail válido." };
+        return { ok: false, code: "invalidEmail" };
       }
 
       if (password.length < 8) {
-        return { ok: false, message: "A senha deve ter pelo menos 8 caracteres." };
+        return { ok: false, code: "invalidPassword" };
       }
 
       if (!window.crypto?.subtle) {
         return {
           ok: false,
-          message: "Seu navegador não oferece suporte ao cadastro seguro local.",
+          code: "noSecureSignUp",
         };
       }
 
@@ -177,7 +187,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (accounts.some((account) => account.email === normalizedEmail)) {
         return {
           ok: false,
-          message: "Já existe uma conta cadastrada com este e-mail.",
+          code: "emailExists",
         };
       }
 

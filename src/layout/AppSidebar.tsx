@@ -4,7 +4,7 @@ import React, { useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookHeart, Brain } from "lucide-react";
+import { BarChart3, BookHeart, Brain, Home } from "lucide-react";
 import {
   CalenderIcon,
   HorizontaLDots,
@@ -13,28 +13,36 @@ import {
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
+import { useI18n } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/i18n/translations";
 
 type NavItem = {
-  name: string;
+  nameKey: TranslationKey;
   icon: React.ReactNode;
   path: string;
 };
 
 const navItems: NavItem[] = [
-  { icon: <TimeIcon />, name: "Rotina", path: "/rotina" },
-  { icon: <TaskIcon />, name: "Tarefas", path: "/tasks" },
-  { icon: <Brain className="h-5 w-5" />, name: "Foco", path: "/foco" },
-  { icon: <CalenderIcon />, name: "Calendário", path: "/calendario" },
+  { icon: <Home className="h-5 w-5" />, nameKey: "navigation.home", path: "/" },
+  { icon: <TimeIcon />, nameKey: "navigation.routine", path: "/rotina" },
+  { icon: <TaskIcon />, nameKey: "navigation.tasks", path: "/tasks" },
+  { icon: <Brain className="h-5 w-5" />, nameKey: "navigation.focus", path: "/foco" },
+  { icon: <CalenderIcon />, nameKey: "navigation.calendar", path: "/calendario" },
   {
     icon: <BookHeart className="h-5 w-5" />,
-    name: "Minha jornada",
+    nameKey: "navigation.journey",
     path: "/jornada",
   },
-  { icon: <BarChart3 className="h-5 w-5" />, name: "Insights", path: "/insights" },
+  {
+    icon: <BarChart3 className="h-5 w-5" />,
+    nameKey: "navigation.insights",
+    path: "/insights",
+  },
 ];
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { t } = useI18n();
   const pathname = usePathname();
   const isOpen = isExpanded || isHovered || isMobileOpen;
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
@@ -52,7 +60,7 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className={`flex py-8 ${isOpen ? "justify-start" : "lg:justify-center"}`}>
-        <Link href="/rotina" aria-label="OceanQuiet">
+        <Link href="/" aria-label="OceanQuiet">
           {isOpen ? (
             <>
               <Image
@@ -96,13 +104,13 @@ const AppSidebar: React.FC = () => {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar">
-        <nav className="mb-6" aria-label="Navegação principal">
+        <nav className="mb-6" aria-label={t("navigation.menu")}>
           <h2
             className={`mb-4 flex text-xs uppercase leading-[20px] text-gray-400 ${
               isOpen ? "justify-start" : "lg:justify-center"
             }`}
           >
-            {isOpen ? "Menu" : <HorizontaLDots />}
+            {isOpen ? t("navigation.menu") : <HorizontaLDots />}
           </h2>
 
           <ul className="flex flex-col gap-4">
@@ -120,7 +128,7 @@ const AppSidebar: React.FC = () => {
                     <span className={active ? "menu-item-icon-active" : "menu-item-icon-inactive"}>
                       {nav.icon}
                     </span>
-                    {isOpen && <span className="menu-item-text">{nav.name}</span>}
+                    {isOpen && <span className="menu-item-text">{t(nav.nameKey)}</span>}
                   </Link>
                 </li>
               );
@@ -132,7 +140,7 @@ const AppSidebar: React.FC = () => {
       <div className="mt-auto border-t border-gray-200 py-4 dark:border-gray-800">
         <Link
           href="/profile"
-          title="Meu perfil"
+          title={t("navigation.profile")}
           className={`flex items-center rounded-xl transition-colors ${
             isOpen ? "gap-3 px-2 py-1.5" : "justify-center py-1.5"
           } ${
@@ -153,9 +161,11 @@ const AppSidebar: React.FC = () => {
           {isOpen && (
             <span className="min-w-0">
               <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Meu perfil
+                {t("navigation.profile")}
               </span>
-              <span className="block text-[11px] text-gray-400">Conta e plano</span>
+              <span className="block text-[11px] text-gray-400">
+                {t("navigation.accountAndPlan")}
+              </span>
             </span>
           )}
         </Link>

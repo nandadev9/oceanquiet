@@ -6,6 +6,7 @@ import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { TasksProvider } from '@/context/TasksContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -30,11 +31,13 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <ThemeProvider>
-          <AuthProvider>
-            <SidebarProvider>
-              <TasksProvider>{children}</TasksProvider>
-            </SidebarProvider>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <SidebarProvider>
+                <TasksProvider>{children}</TasksProvider>
+              </SidebarProvider>
+            </AuthProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

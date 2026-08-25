@@ -11,7 +11,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 function getDestination(nextPath: string | null) {
   return nextPath?.startsWith("/") && !nextPath.startsWith("//")
     ? nextPath
-    : "/rotina";
+    : "/";
 }
 
 export default function SignInForm() {

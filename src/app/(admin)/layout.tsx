@@ -1,6 +1,7 @@
 "use client";
 
 import { useSidebar } from "@/context/SidebarContext";
+import { usePathname } from "next/navigation";
 import AuthGuard from "@/components/auth/AuthGuard";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
@@ -13,6 +14,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const pathname = usePathname();
+  const isFocusExperience = pathname === "/foco";
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen
@@ -33,8 +36,10 @@ export default function AdminLayout({
       >
         {/* Header */}
         <AppHeader />
-        {/* Page Content */}
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</div>
+        {/* The focus route deliberately uses the whole available canvas for ambient scenes. */}
+        <div className={isFocusExperience ? "max-w-none" : "p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6"}>
+          {children}
+        </div>
       </div>
       </div>
     </AuthGuard>

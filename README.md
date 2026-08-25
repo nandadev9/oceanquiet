@@ -31,6 +31,11 @@ Outros comandos disponíveis: `npm run build`, `npm run start` e `npm run lint`.
 
 No protótipo atual, as contas são mantidas somente no navegador para demonstrar o fluxo. Antes de publicar, conecte o aplicativo a um serviço de autenticação e banco de dados adequados.
 
+## Temas e evolução da plataforma
+
+- O guia para imagens, vídeos e sons dos temas de Foco está em [public/focus/themes/FORMATO.md](./public/focus/themes/FORMATO.md).
+- O plano de evolução para Supabase e Vercel está em [docs/platform-roadmap.md](./docs/platform-roadmap.md).
+
 ## Licença
 
 Consulte [LICENSE](./LICENSE) para as informações de licença aplicáveis.

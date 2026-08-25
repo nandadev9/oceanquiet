@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState, useSyncExternalStore } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
@@ -10,6 +9,7 @@ import {
   subscribeToSession,
 } from "@/lib/auth/session";
 import { useI18n } from "@/context/LanguageContext";
+import { useProfileAvatar } from "@/hooks/useProfileAvatar";
 
 export default function UserDropdown() {
   const router = useRouter();
@@ -43,6 +43,7 @@ export default function UserDropdown() {
   const userName = session?.name || "Musharof";
   const userFullName = session?.name || "Musharof Chowdhury";
   const userEmail = session?.email || "randomuser@pimjo.com";
+  const avatar = useProfileAvatar(session?.id);
 
   return (
     <div className="relative">
@@ -51,11 +52,12 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <Image
-            width={44}
-            height={44}
-            src="/images/user/owner.jpg"
+          {/* The selected profile photo is a local data URL, so it bypasses Next image optimization. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={avatar}
             alt={t("profile.avatarAlt")}
+            className="h-full w-full object-cover"
           />
         </span>
 
@@ -150,7 +152,7 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              href="/profile"
+              href="/ajuda"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg

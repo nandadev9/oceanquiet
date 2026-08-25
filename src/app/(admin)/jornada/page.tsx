@@ -73,6 +73,19 @@ export default function JornadaPage() {
   }, []);
   useEffect(() => { if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify({ entries, checkIns })); }, [entries, checkIns, ready]);
 
+  // A new day opens with its first unanswered check-in question already visible.
+  // Closing it is still respected until the person changes the day or answers again.
+  useEffect(() => {
+    if (!ready) return;
+
+    const savedCheckIn = checkIns[selectedDate] || {};
+    const firstUnanswered = (Object.keys(questionCopy) as QuestionId[]).findIndex(
+      (questionId) => savedCheckIn[questionId] === undefined,
+    );
+
+    setActiveQuestion(firstUnanswered === -1 ? null : firstUnanswered);
+  }, [checkIns, ready, selectedDate]);
+
   const dayEntries = useMemo(() => entries.filter((entry) => entry.date === selectedDate).sort((a, b) => a.createdAt.localeCompare(b.createdAt)), [entries, selectedDate]);
   const bookmarked = entries.filter((entry) => entry.favorite);
   const bookmarkedDates = new Set(bookmarked.map((entry) => entry.date));

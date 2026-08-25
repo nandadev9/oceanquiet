@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, Cloud, Heart, Plus, X } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/i18n/translations";
 import { todayISO } from "@/lib/ocean/dates";
 
 type Answer = 0 | 1 | 2;
@@ -14,31 +16,41 @@ type Store = { entries: Entry[]; checkIns: Record<string, CheckIn> };
 
 const STORAGE_KEY = "oceanquiet.journey.v1";
 const MAX_BOOKMARKS = 20;
-const questions: { id: QuestionId; title: string; options: string[] }[] = [
-  { id: "thoughts", title: "Como está a velocidade dos seus pensamentos?", options: ["Calmos e sob controle", "Moderadamente acelerados", "Difíceis de frear"] },
-  { id: "energy", title: "Como está sua energia mental hoje?", options: ["Boa disposição", "Cansado, mas capaz", "Profundamente esgotado"] },
-  { id: "selfCriticism", title: "Como foi sua autocrítica hoje?", options: ["Em paz comigo", "Algumas dúvidas", "Muito intensa"] },
-  { id: "frustration", title: "Como você reagiu aos obstáculos?", options: ["Com calma", "Com frustração passageira", "Com paralisia ou desespero"] },
-  { id: "tension", title: "Como seu corpo se sentiu?", options: ["Relaxado", "Levemente tenso", "Muito tenso ou agitado"] },
-  { id: "sleep", title: "Como foi seu sono?", options: ["Restaurador", "Regular", "Ruim ou inquieto"] },
-];
+const questionCopy: Record<QuestionId, { title: TranslationKey; options: [TranslationKey, TranslationKey, TranslationKey] }> = {
+  thoughts: { title: "journey.question.thoughts.title", options: ["journey.question.thoughts.option0", "journey.question.thoughts.option1", "journey.question.thoughts.option2"] },
+  energy: { title: "journey.question.energy.title", options: ["journey.question.energy.option0", "journey.question.energy.option1", "journey.question.energy.option2"] },
+  selfCriticism: { title: "journey.question.selfCriticism.title", options: ["journey.question.selfCriticism.option0", "journey.question.selfCriticism.option1", "journey.question.selfCriticism.option2"] },
+  frustration: { title: "journey.question.frustration.title", options: ["journey.question.frustration.option0", "journey.question.frustration.option1", "journey.question.frustration.option2"] },
+  tension: { title: "journey.question.tension.title", options: ["journey.question.tension.option0", "journey.question.tension.option1", "journey.question.tension.option2"] },
+  sleep: { title: "journey.question.sleep.title", options: ["journey.question.sleep.option0", "journey.question.sleep.option1", "journey.question.sleep.option2"] },
+};
 const moods = ["☺", "◐", "☹"];
 const penClasses: Record<PenColor, string> = { ink: "text-slate-800", blue: "text-blue-800", red: "text-rose-800" };
 const typeClasses: Record<WritingStyle, string> = { hand: "font-hand", neat: "font-serif", typewriter: "font-mono text-[15px]" };
 
 function isoFrom(date: Date) { return date.toISOString().slice(0, 10); }
 function moveDate(date: string, offset: number) { const next = new Date(`${date}T12:00:00`); next.setDate(next.getDate() + offset); return isoFrom(next); }
-function longDate(date: string) { return new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${date}T12:00:00`)); }
-function shortMonth(date: Date) { return new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(date).replace(".", "").slice(0, 3); }
+function longDate(date: string, locale: string) { return new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${date}T12:00:00`)); }
+function shortMonth(date: Date, locale: string) { return new Intl.DateTimeFormat(locale, { month: "short" }).format(date).replace(".", "").slice(0, 3); }
 function weekFor(date: string) { return Array.from({ length: 7 }, (_, i) => moveDate(date, i - 3)); }
-function weather(checkIn: CheckIn) {
+function weather(checkIn: CheckIn, t: (key: TranslationKey) => string) {
   const values = Object.values(checkIn);
-  if (!values.length) return { symbol: "☁", label: "Sem registro" };
+  if (!values.length) return { symbol: "☁", label: t("journey.noRecord") };
   const mean = values.reduce<number>((sum, value) => sum + value, 0) / values.length;
-  return mean < .7 ? { symbol: "☀", label: "Dia leve" } : mean < 1.4 ? { symbol: "◐", label: "Dia oscilante" } : { symbol: "☁", label: "Dia exigente" };
+  return mean < .7
+    ? { symbol: "☀", label: t("journey.lightDay") }
+    : mean < 1.4
+      ? { symbol: "◐", label: t("journey.oscillatingDay") }
+      : { symbol: "☁", label: t("journey.demandingDay") };
 }
 
 export default function JornadaPage() {
+  const { dateLocale, t } = useLanguage();
+  const questions = (Object.keys(questionCopy) as QuestionId[]).map((id) => ({
+    id,
+    title: t(questionCopy[id].title),
+    options: questionCopy[id].options.map((key) => t(key)),
+  }));
   const [selectedDate, setSelectedDate] = useState(todayISO);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [checkIns, setCheckIns] = useState<Record<string, CheckIn>>({});
@@ -66,7 +78,11 @@ export default function JornadaPage() {
   const bookmarkedDates = new Set(bookmarked.map((entry) => entry.date));
   const writtenDates = new Set(entries.map((entry) => entry.date));
   const checkIn = checkIns[selectedDate] || {};
-  const currentWeather = weather(checkIn);
+  const currentWeather = weather(checkIn, t);
+  const calendarWeekdays = Array.from(
+    { length: 7 },
+    (_, index) => new Intl.DateTimeFormat(dateLocale, { weekday: "narrow" }).format(new Date(2024, 0, 1 + index)),
+  );
   const weeklyDates = weekFor(selectedDate);
   const calendarDays = useMemo(() => {
     const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
@@ -103,7 +119,7 @@ export default function JornadaPage() {
   const toggleBookmark = (id: string) => {
     const entry = entries.find((item) => item.id === id);
     if (!entry) return;
-    if (!entry.favorite && bookmarked.length >= MAX_BOOKMARKS) { setLimitMessage("Você já marcou 20 páginas. Remova um marcador para escolher outra."); return; }
+    if (!entry.favorite && bookmarked.length >= MAX_BOOKMARKS) { setLimitMessage(t("journey.maxBookmarks")); return; }
     setLimitMessage("");
     setEntries((current) => current.map((item) => item.id === id ? { ...item, favorite: !item.favorite } : item));
   };
@@ -186,24 +202,24 @@ export default function JornadaPage() {
         }
       `}</style>
       <section className="relative mb-7 border-b border-slate-200 pb-5">
-        <div className="mb-3"><p className="text-sm font-medium text-slate-600">Minha Semana</p></div>
-        <div className="grid grid-cols-7 gap-2 sm:gap-3">{weeklyDates.map((date) => { const day = new Date(`${date}T12:00:00`); const selected = date === selectedDate; return <button key={date} onClick={() => { setSelectedDate(date); setEditing(false); }} className={`relative min-h-14 rounded-lg border px-2 py-2 text-center transition ${selected ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white hover:border-slate-400"}`}><span className="block text-[10px] uppercase opacity-60">{day.toLocaleDateString("pt-BR", { weekday: "short" }).slice(0, 3)}</span><span className="block text-sm font-semibold">{day.getDate()}</span>{bookmarkedDates.has(date) && <Bookmark size={12} fill="currentColor" className={`absolute right-1.5 top-1.5 ${selected ? "text-white" : "text-slate-700"}`} />}</button>; })}</div>
-        <button onClick={() => setCalendarOpen((value) => !value)} className="mt-5 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900">Expandir <ChevronDown size={14} className={calendarOpen ? "rotate-180" : ""} /></button>
-        {calendarOpen && <div className="absolute right-0 top-7 z-20 w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-xl"><div className="mb-3 flex items-center justify-between"><button onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={16} /></button><p className="text-sm font-medium text-slate-700">{shortMonth(calendarMonth)} {calendarMonth.getFullYear()}</p><button onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={16} /></button></div><div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-400">{["S", "T", "Q", "Q", "S", "S", "D"].map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}</div><div className="mt-1 grid grid-cols-7 gap-1">{calendarDays.map((day, index) => { if (!day) return <span key={`empty-${index}`} />; const date = `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`; const written = writtenDates.has(date); const marked = bookmarkedDates.has(date); return <button key={date} onClick={() => { setSelectedDate(date); setEditing(false); setCalendarOpen(false); }} className={`relative grid h-9 place-items-center rounded-lg text-xs ${date === selectedDate ? "bg-slate-900 text-white" : "hover:bg-slate-100"}`}>{day}{written && <span className={`absolute bottom-1 h-1 w-1 rounded-full ${date === selectedDate ? "bg-white" : "bg-slate-500"}`} />}{marked && <Bookmark size={10} fill="currentColor" className={`absolute right-0.5 top-0.5 ${date === selectedDate ? "text-white" : "text-slate-700"}`} />}</button>; })}</div></div>}
+        <div className="mb-3"><p className="text-sm font-medium text-slate-600">{t("journey.week")}</p></div>
+        <div className="grid grid-cols-7 gap-2 sm:gap-3">{weeklyDates.map((date) => { const day = new Date(`${date}T12:00:00`); const selected = date === selectedDate; return <button key={date} onClick={() => { setSelectedDate(date); setEditing(false); }} className={`relative min-h-14 rounded-lg border px-2 py-2 text-center transition ${selected ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white hover:border-slate-400"}`}><span className="block text-[10px] uppercase opacity-60">{day.toLocaleDateString(dateLocale, { weekday: "short" }).replace(".", "").slice(0, 3)}</span><span className="block text-sm font-semibold">{day.getDate()}</span>{bookmarkedDates.has(date) && <Bookmark size={12} fill="currentColor" className={`absolute right-1.5 top-1.5 ${selected ? "text-white" : "text-slate-700"}`} />}</button>; })}</div>
+        <button onClick={() => setCalendarOpen((value) => !value)} className="mt-5 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900">{calendarOpen ? t("journey.collapse") : t("journey.expand")} <ChevronDown size={14} className={calendarOpen ? "rotate-180" : ""} /></button>
+        {calendarOpen && <div className="absolute right-0 top-7 z-20 w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-xl"><div className="mb-3 flex items-center justify-between"><button aria-label={t("journey.previousDay")} onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={16} /></button><p className="text-sm font-medium text-slate-700">{shortMonth(calendarMonth, dateLocale)} {calendarMonth.getFullYear()}</p><button aria-label={t("journey.nextDay")} onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={16} /></button></div><div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-400">{calendarWeekdays.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}</div><div className="mt-1 grid grid-cols-7 gap-1">{calendarDays.map((day, index) => { if (!day) return <span key={`empty-${index}`} />; const date = `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`; const written = writtenDates.has(date); const marked = bookmarkedDates.has(date); return <button key={date} onClick={() => { setSelectedDate(date); setEditing(false); setCalendarOpen(false); }} className={`relative grid h-9 place-items-center rounded-lg text-xs ${date === selectedDate ? "bg-slate-900 text-white" : "hover:bg-slate-100"}`}>{day}{written && <span className={`absolute bottom-1 h-1 w-1 rounded-full ${date === selectedDate ? "bg-white" : "bg-slate-500"}`} />}{marked && <Bookmark size={10} fill="currentColor" className={`absolute right-0.5 top-0.5 ${date === selectedDate ? "text-white" : "text-slate-700"}`} />}</button>; })}</div></div>}
         {limitMessage && <p className="mt-3 text-xs text-slate-500">{limitMessage}</p>}
       </section>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px]">
         <section className="journey-paper relative min-h-[620px] overflow-hidden rounded-xl border border-slate-200 bg-[#fffefb] shadow-sm" onClick={() => { if (!editing) openEditor(); }} style={{ backgroundImage: "repeating-linear-gradient(to bottom, transparent 0, transparent 34px, #e7eef4 35px)", backgroundPosition: "0 132px" }}>
           <div className="journey-page-margin absolute bottom-0 left-10 top-0 w-px bg-rose-100" />
-          <div className="journey-paper-header relative flex items-center justify-between border-b border-slate-200 bg-white/70 px-10 py-6"><button aria-label="Dia anterior" onClick={(event) => { event.stopPropagation(); setSelectedDate(moveDate(selectedDate, -1)); setEditing(false); }}><ChevronLeft size={18} /></button><div className="text-center"><p className="font-hand text-xl text-slate-800 capitalize">{longDate(selectedDate)}</p><p className="mt-1 text-[11px] uppercase tracking-[.16em] text-slate-400">Diário pessoal</p></div><button aria-label="Próximo dia" onClick={(event) => { event.stopPropagation(); setSelectedDate(moveDate(selectedDate, 1)); setEditing(false); }}><ChevronRight size={18} /></button></div>
+          <div className="journey-paper-header relative flex items-center justify-between border-b border-slate-200 bg-white/70 px-10 py-6"><button aria-label={t("journey.previousDay")} onClick={(event) => { event.stopPropagation(); setSelectedDate(moveDate(selectedDate, -1)); setEditing(false); }}><ChevronLeft size={18} /></button><div className="text-center"><p className="font-hand text-xl text-slate-800 capitalize">{longDate(selectedDate, dateLocale)}</p><p className="mt-1 text-[11px] uppercase tracking-[.16em] text-slate-400">{t("journey.personalDiary")}</p></div><button aria-label={t("journey.nextDay")} onClick={(event) => { event.stopPropagation(); setSelectedDate(moveDate(selectedDate, 1)); setEditing(false); }}><ChevronRight size={18} /></button></div>
           <div className="relative px-16 py-9">
-            {editing ? <div onClick={(event) => event.stopPropagation()}><div className="mb-5 flex items-center justify-between"><p className="font-hand text-xl text-slate-700">Escreva sem pressa</p><div className="flex items-center gap-2">{(["ink", "blue", "red"] as PenColor[]).map((color) => <button key={color} onClick={() => setPenColor(color)} aria-label={`Caneta ${color}`} className={`h-5 w-5 rounded-full ${color === "ink" ? "bg-slate-800" : color === "blue" ? "bg-blue-700" : "bg-rose-700"} ${penColor === color ? "ring-2 ring-slate-400 ring-offset-2" : ""}`} />)}{(["hand", "neat", "typewriter"] as WritingStyle[]).map((style) => <button key={style} onClick={() => setWritingStyle(style)} className={`ml-1 text-xs ${writingStyle === style ? "font-bold text-slate-900" : "text-slate-400"}`}>{style === "hand" ? "Aa" : style === "neat" ? "Ab" : "TT"}</button>)}</div></div><textarea autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Meu dia hoje está sendo..." rows={12} className={`w-full resize-none bg-transparent leading-[35px] outline-none placeholder:text-slate-300 ${penClasses[penColor]} ${typeClasses[writingStyle]}`} /><div className="mt-5 flex justify-end"><button onClick={saveEntry} disabled={!draft.trim()} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-40"><Plus size={15} /> Salvar página</button></div></div> : <div className="cursor-text">{dayEntries.length ? <div className="space-y-7">{dayEntries.map((entry) => <article key={entry.id} className="group relative pr-9"><button onClick={(event) => { event.stopPropagation(); toggleBookmark(entry.id); }} className={`absolute right-0 top-0 ${entry.favorite ? "text-slate-800" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} aria-label="Marcar página"><Bookmark size={17} fill={entry.favorite ? "currentColor" : "none"} /></button><p className={`whitespace-pre-wrap leading-[35px] ${penClasses[entry.penColor || "ink"]} ${typeClasses[entry.writingStyle || "hand"]}`}>{entry.content}</p></article>)}</div> : <p className="pt-16 text-center font-hand text-lg text-slate-300">Toque na página para começar a escrever.</p>}</div>}
+          {editing ? <div onClick={(event) => event.stopPropagation()}><div className="mb-5 flex items-center justify-between"><p className="font-hand text-xl text-slate-700">{t("journey.writeSlowly")}</p><div className="flex items-center gap-2">{(["ink", "blue", "red"] as PenColor[]).map((color) => <button key={color} onClick={() => setPenColor(color)} aria-label={t(`journey.pen.${color}` as TranslationKey)} className={`h-5 w-5 rounded-full ${color === "ink" ? "bg-slate-800" : color === "blue" ? "bg-blue-700" : "bg-rose-700"} ${penColor === color ? "ring-2 ring-slate-400 ring-offset-2" : ""}`} />)}{(["hand", "neat", "typewriter"] as WritingStyle[]).map((style) => <button key={style} onClick={() => setWritingStyle(style)} className={`ml-1 text-xs ${writingStyle === style ? "font-bold text-slate-900" : "text-slate-400"}`}>{style === "hand" ? "Aa" : style === "neat" ? "Ab" : "TT"}</button>)}</div></div><textarea autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={t("journey.placeholder")} rows={12} className={`w-full resize-none bg-transparent leading-[35px] outline-none placeholder:text-slate-300 ${penClasses[penColor]} ${typeClasses[writingStyle]}`} /><div className="mt-5 flex justify-end"><button onClick={saveEntry} disabled={!draft.trim()} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-40"><Plus size={15} /> {t("journey.savePage")}</button></div></div> : <div className="cursor-text">{dayEntries.length ? <div className="space-y-7">{dayEntries.map((entry) => <article key={entry.id} className="group relative pr-9"><button onClick={(event) => { event.stopPropagation(); toggleBookmark(entry.id); }} className={`absolute right-0 top-0 ${entry.favorite ? "text-slate-800" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} aria-label={t("journey.bookmarkPage")}><Bookmark size={17} fill={entry.favorite ? "currentColor" : "none"} /></button><p className={`whitespace-pre-wrap leading-[35px] ${penClasses[entry.penColor || "ink"]} ${typeClasses[entry.writingStyle || "hand"]}`}>{entry.content}</p></article>)}</div> : <p className="pt-16 text-center font-hand text-lg text-slate-300">{t("journey.tapToWrite")}</p>}</div>}
           </div>
         </section>
 
         <aside className="self-start border-l border-slate-200 pl-6">
-          {activeQuestion === null ? <div><div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-[.15em] text-slate-400">Clima interno</p><button className="relative text-slate-700" aria-label="Resumo do dia"><Heart size={20} /><Cloud size={11} className="absolute -bottom-1 -right-1 bg-white" /></button></div><p className="mt-4 font-serif text-xl text-slate-800">{currentWeather.symbol} {currentWeather.label}</p><p className="mt-2 text-sm leading-6 text-slate-500">Um check-in breve ajuda você a entender seus padrões com o tempo.</p><button onClick={() => setActiveQuestion(0)} className="mt-5 text-sm font-medium text-slate-800 underline underline-offset-4">Fazer check-in</button></div> : <div><button onClick={() => setActiveQuestion(null)} className="float-right text-slate-400"><X size={16} /></button><p className="text-xs font-semibold uppercase tracking-[.15em] text-slate-400">Check-in {activeQuestion + 1}/{questions.length}</p><div className="mt-3 h-px bg-slate-200"><div className="h-px bg-slate-800" style={{ width: `${((activeQuestion + 1) / questions.length) * 100}%` }} /></div><p className="mt-5 font-serif text-lg leading-7 text-slate-800">{questions[activeQuestion].title}</p><div className="mt-5 grid grid-cols-3 gap-2">{[...moods].reverse().map((mood, index) => { const value = (2 - index) as Answer; return <button key={mood} onClick={() => answer(value)} className="rounded-lg border border-slate-200 px-3 py-3 text-center text-slate-700 hover:border-slate-700"><span className="block text-2xl">{mood}</span><span className="mt-2 block text-xs leading-5 text-slate-500">{questions[activeQuestion].options[value]}</span></button>; })}</div></div>}
+          {activeQuestion === null ? <div><div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-[.15em] text-slate-400">{t("journey.innerClimate")}</p><button className="relative text-slate-700" aria-label={t("journey.daySummary")}><Heart size={20} /><Cloud size={11} className="absolute -bottom-1 -right-1 bg-white" /></button></div><p className="mt-4 font-serif text-xl text-slate-800">{currentWeather.symbol} {currentWeather.label}</p><p className="mt-2 text-sm leading-6 text-slate-500">{t("journey.climateDescription")}</p><button onClick={() => setActiveQuestion(0)} className="mt-5 text-sm font-medium text-slate-800 underline underline-offset-4">{t("journey.startCheckIn")}</button></div> : <div><button onClick={() => setActiveQuestion(null)} className="float-right text-slate-400" aria-label={t("journey.closeCheckIn")}><X size={16} /></button><p className="text-xs font-semibold uppercase tracking-[.15em] text-slate-400">{t("journey.checkInProgress", { current: activeQuestion + 1, total: questions.length })}</p><div className="mt-3 h-px bg-slate-200"><div className="h-px bg-slate-800" style={{ width: `${((activeQuestion + 1) / questions.length) * 100}%` }} /></div><p className="mt-5 font-serif text-lg leading-7 text-slate-800">{questions[activeQuestion].title}</p><div className="mt-5 grid grid-cols-3 gap-2">{[...moods].reverse().map((mood, index) => { const value = (2 - index) as Answer; return <button key={mood} onClick={() => answer(value)} className="rounded-lg border border-slate-200 px-3 py-3 text-center text-slate-700 hover:border-slate-700"><span className="block text-2xl">{mood}</span><span className="mt-2 block text-xs leading-5 text-slate-500">{questions[activeQuestion].options[value]}</span></button>; })}</div></div>}
         </aside>
       </div>
     </main>

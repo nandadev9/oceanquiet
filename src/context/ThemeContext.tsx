@@ -23,8 +23,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     const savedTheme = localStorage.getItem("theme") as Theme | null;
     const initialTheme = savedTheme || "light"; // Default to light theme
 
-    setTheme(initialTheme);
-    setIsInitialized(true);
+    const frame = window.requestAnimationFrame(() => {
+      setTheme(initialTheme);
+      setIsInitialized(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {

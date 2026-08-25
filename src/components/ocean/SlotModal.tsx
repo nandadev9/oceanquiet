@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
+import { useLanguage } from "@/context/LanguageContext";
 import { DURATION_OPTIONS, EVENT_SIGNALS } from "@/lib/ocean/constants";
 import { clampDuration, clampScheduleStart, minutesToTimeLabel, timeLabelToMinutes } from "@/lib/ocean/dates";
+import type { TranslationKey } from "@/i18n/translations";
 import type { EventColor } from "@/lib/ocean/types";
 
 interface SlotModalProps {
@@ -19,6 +21,13 @@ interface SlotModalProps {
   onDelete?: () => void;
 }
 
+const signalLabelKeys: Record<EventColor, TranslationKey> = {
+  primary: "slot.color.primary",
+  danger: "slot.color.danger",
+  success: "slot.color.success",
+  warning: "slot.color.warning",
+};
+
 export default function SlotModal({
   isOpen,
   onClose,
@@ -31,6 +40,7 @@ export default function SlotModal({
   onSave,
   onDelete,
 }: SlotModalProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState(title);
   const [time, setTime] = useState(minutesToTimeLabel(startMinutes));
   const [duration, setDuration] = useState(durationMinutes);
@@ -38,14 +48,19 @@ export default function SlotModal({
 
   const save = () => {
     const start = clampScheduleStart(timeLabelToMinutes(time));
-    onSave(name.trim() || "Evento", start, clampDuration(start, duration), signal);
+    onSave(
+      name.trim() || t("calendar.addEvent").replace(" +", ""),
+      start,
+      clampDuration(start, duration),
+      signal,
+    );
     onClose();
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-md p-6" showCloseButton={false}>
       <h3 className="text-lg font-extrabold text-gray-800 dark:text-white/90 mb-1">
-        {isEdit ? "Editar evento" : "Novo evento"}
+        {isEdit ? t("slot.editEvent") : t("slot.newEvent")}
       </h3>
       {dateLabel ? (
         <p className="text-sm text-gray-500 mb-5 dark:text-gray-400">{dateLabel}</p>
@@ -54,18 +69,18 @@ export default function SlotModal({
       )}
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-bold text-gray-500 mb-1.5">Título</label>
+          <label className="block text-xs font-bold text-gray-500 mb-1.5">{t("slot.title")}</label>
           <input
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && save()}
-            placeholder="Ex.: Acordar"
+            placeholder={t("slot.titlePlaceholder")}
             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-indigo-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-500 mb-2">Cor</label>
+          <label className="block text-xs font-bold text-gray-500 mb-2">{t("slot.color")}</label>
           <div className="flex flex-wrap gap-3">
             {(Object.keys(EVENT_SIGNALS) as EventColor[]).map((key) => {
               const meta = EVENT_SIGNALS[key];
@@ -84,7 +99,7 @@ export default function SlotModal({
                   >
                     <span className={`h-2.5 w-2.5 rounded-full ${meta.swatch} ${selected ? "opacity-100" : "opacity-80"}`} />
                   </span>
-                  {meta.label}
+                  {t(signalLabelKeys[key])}
                 </button>
               );
             })}
@@ -92,7 +107,7 @@ export default function SlotModal({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">Início</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">{t("slot.start")}</label>
             <input
               type="time"
               value={time}
@@ -101,7 +116,7 @@ export default function SlotModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">Duração</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">{t("slot.duration")}</label>
             <select
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
@@ -121,15 +136,15 @@ export default function SlotModal({
           onClick={save}
           className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"
         >
-          Salvar
+          {t("slot.save")}
         </button>
         {isEdit && onDelete && (
           <button onClick={onDelete} className="px-3 py-2.5 text-sm font-semibold text-rose-600 hover:text-rose-700">
-            Remover
+            {t("slot.remove")}
           </button>
         )}
         <button onClick={onClose} className="px-4 py-2.5 text-sm font-semibold text-gray-500 hover:text-gray-700">
-          Cancelar
+          {t("slot.cancel")}
         </button>
       </div>
     </Modal>

@@ -27,15 +27,15 @@ export function addDaysISO(iso: string, days: number): string {
   return toISODate(d);
 }
 
-export function formatDueLabel(iso: string | null): string | null {
+export function formatDueLabel(iso: string | null, locale = "pt-BR"): string | null {
   if (!iso) return null;
   const d = parseISODate(iso);
   const today = parseISODate(todayISO());
   const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
-  if (diff === 0) return "Hoje";
-  if (diff === 1) return "Amanhã";
-  if (diff === -1) return "Ontem";
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  if (diff >= -1 && diff <= 1) {
+    return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(diff, "day");
+  }
+  return d.toLocaleDateString(locale, { day: "2-digit", month: "short" });
 }
 
 export function formatLongDate(iso: string, locale = "pt-BR"): string {

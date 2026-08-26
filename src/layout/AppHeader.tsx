@@ -1,18 +1,45 @@
 "use client";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
-import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
+import { useTasks } from "@/context/TasksContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { useI18n } from "@/context/LanguageContext";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState ,useEffect,useRef} from "react";
+import { useRouter } from "next/navigation";
+import { CalendarDays, Clock3, ListTodo, Star } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
+type SearchArea = "task" | "priority" | "routine" | "calendar";
+
+type SearchResult = {
+  id: string;
+  area: SearchArea;
+  title: string;
+  description: string;
+  href: string;
+};
+
+const SEARCH_RESULT_LIMIT = 8;
+
+function formatMinutes(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60).toString().padStart(2, "0");
+  const minutes = (totalMinutes % 60).toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [activeResultIndex, setActiveResultIndex] = useState(0);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
-  const { t } = useI18n();
+  const { t, formatDate } = useI18n();
+  const { ready, activeTasks, categories, schedule, getTask } = useTasks();
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -25,12 +52,87 @@ const AppHeader: React.FC = () => {
   const toggleApplicationMenu = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
   };
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const searchResults = useMemo<SearchResult[]>(() => {
+    if (!ready || !normalizedQuery) return [];
+
+    const includesQuery = (...values: Array<string | null | undefined>) =>
+      values.some((value) => value?.toLocaleLowerCase().includes(normalizedQuery));
+
+    const taskResults = activeTasks
+      .filter((task) => {
+        const category = categories.find((item) => item.id === task.categoryId);
+        return includesQuery(task.title, task.description, category?.name);
+      })
+      .map((task) => {
+        const category = categories.find((item) => item.id === task.categoryId);
+        const area: SearchArea =
+          task.board === "weekly"
+            ? "priority"
+            : task.board === "daily"
+              ? "routine"
+              : "task";
+
+        return {
+          id: `task-${task.id}`,
+          area,
+          title: task.title,
+          description: task.description || category?.name || t("header.searchTasks"),
+          href: area === "task" ? "/tasks" : "/rotina",
+        };
+      });
+
+    const scheduleResults = schedule
+      .filter((block) => {
+        const task = block.taskId ? getTask(block.taskId) : undefined;
+        if (block.taskId && (!task || task.archivedAt)) return false;
+        return includesQuery(block.title, task?.title, task?.description);
+      })
+      .map<SearchResult>((block) => {
+        const task = block.taskId ? getTask(block.taskId) : undefined;
+        const isRoutine = Boolean(block.taskId);
+
+        return {
+          id: `schedule-${block.id}`,
+          area: isRoutine ? "routine" : "calendar",
+          title: task?.title || block.title,
+          description: `${formatDate(`${block.date}T12:00:00`, {
+            day: "numeric",
+            month: "short",
+          })} · ${formatMinutes(block.startMinutes)}`,
+          href: isRoutine ? "/rotina" : "/calendario",
+        };
+      });
+
+    return [...taskResults, ...scheduleResults].slice(0, SEARCH_RESULT_LIMIT);
+  }, [activeTasks, categories, formatDate, getTask, normalizedQuery, ready, schedule, t]);
+
+  const selectResult = (result: SearchResult) => {
+    setQuery("");
+    setIsSearchOpen(false);
+    router.push(result.href);
+  };
+
+  const searchAreaLabel = (area: SearchArea) => {
+    if (area === "priority") return t("header.searchPriority");
+    if (area === "routine") return t("header.searchRoutine");
+    if (area === "calendar") return t("header.searchCalendar");
+    return t("header.searchTasks");
+  };
+
+  const searchAreaIcon = (area: SearchArea) => {
+    if (area === "priority") return <Star size={15} />;
+    if (area === "routine") return <Clock3 size={15} />;
+    if (area === "calendar") return <CalendarDays size={15} />;
+    return <ListTodo size={15} />;
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
         event.preventDefault();
+        setIsSearchOpen(true);
         inputRef.current?.focus();
       }
     };
@@ -41,6 +143,39 @@ const AppHeader: React.FC = () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    const closeWhenClickingOutside = (event: MouseEvent) => {
+      if (!searchRef.current?.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeWhenClickingOutside);
+    return () => document.removeEventListener("mousedown", closeWhenClickingOutside);
+  }, []);
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      setIsSearchOpen(false);
+      inputRef.current?.blur();
+      return;
+    }
+
+    if (!searchResults.length) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveResultIndex((current) => (current + 1) % searchResults.length);
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveResultIndex((current) =>
+        current === 0 ? searchResults.length - 1 : current - 1,
+      );
+    }
+  };
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
@@ -123,8 +258,16 @@ const AppHeader: React.FC = () => {
             </svg>
           </button>
 
-          <div className="hidden lg:block">
-            <form aria-label={t("header.search")}>
+          <div className="hidden lg:block" ref={searchRef}>
+            <form
+              className="relative"
+              aria-label={t("header.search")}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const result = searchResults[activeResultIndex];
+                if (result) selectResult(result);
+              }}
+            >
               <div className="relative">
                 <span className="absolute -translate-y-1/2 left-4 top-1/2 pointer-events-none">
                   <svg
@@ -146,15 +289,94 @@ const AppHeader: React.FC = () => {
                 <input
                   ref={inputRef}
                   type="text"
+                  value={query}
                   placeholder={t("header.searchPlaceholder")}
+                  role="combobox"
+                  aria-expanded={isSearchOpen}
+                  aria-controls="global-search-results"
+                  aria-activedescendant={
+                    isSearchOpen && searchResults[activeResultIndex]
+                      ? `global-search-result-${searchResults[activeResultIndex].id}`
+                      : undefined
+                  }
+                  autoComplete="off"
+                  onFocus={() => setIsSearchOpen(true)}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setIsSearchOpen(true);
+                    setActiveResultIndex(0);
+                  }}
+                  onKeyDown={handleSearchKeyDown}
                   className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
                 />
 
-                <button className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSearchOpen(true);
+                    inputRef.current?.focus();
+                  }}
+                  className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400"
+                  aria-label={t("header.search")}
+                >
                   <span> ⌘ </span>
                   <span> K </span>
                 </button>
               </div>
+
+              {isSearchOpen && (
+                <div
+                  id="global-search-results"
+                  role="listbox"
+                  className="absolute left-0 top-full z-99999 mt-2 w-[430px] overflow-hidden rounded-xl border border-gray-200 bg-white p-1.5 shadow-theme-lg dark:border-gray-800 dark:bg-gray-900"
+                >
+                  {!normalizedQuery ? (
+                    <p className="px-3 py-4 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                      {t("header.searchHint")}
+                    </p>
+                  ) : !ready ? (
+                    <p className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {t("header.searchLoading")}
+                    </p>
+                  ) : searchResults.length === 0 ? (
+                    <p className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {t("header.searchEmpty")}
+                    </p>
+                  ) : (
+                    searchResults.map((result, index) => (
+                      <button
+                        key={result.id}
+                        id={`global-search-result-${result.id}`}
+                        type="button"
+                        role="option"
+                        aria-selected={activeResultIndex === index}
+                        onMouseEnter={() => setActiveResultIndex(index)}
+                        onClick={() => selectResult(result)}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                          activeResultIndex === index
+                            ? "bg-brand-50 dark:bg-brand-500/10"
+                            : "hover:bg-gray-50 dark:hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-white/[0.06] dark:text-gray-300">
+                          {searchAreaIcon(result.area)}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-gray-800 dark:text-white/90">
+                            {result.title}
+                          </span>
+                          <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                            {result.description}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                          {searchAreaLabel(result.area)}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </form>
           </div>
         </div>
@@ -164,15 +386,9 @@ const AppHeader: React.FC = () => {
           } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
-            {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
-            {/* <!-- Dark Mode Toggler --> */}
-
-           <NotificationDropdown /> 
-            {/* <!-- Notification Menu Area --> */}
           </div>
-          {/* <!-- User Area --> */}
-          <UserDropdown /> 
+          <UserDropdown />
     
         </div>
       </div>

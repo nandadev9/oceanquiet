@@ -249,13 +249,15 @@ export default function FocusStage() {
   const openTasks = useMemo(() => daily.filter((t) => t.status !== "done"), [daily]);
 
   if (!ready || !hydrated) {
-    return <div className="h-[calc(100dvh-8.5rem)] rounded-2xl bg-slate-900" />;
+    return <div className="h-[calc(100dvh-76px)] min-h-[520px] bg-slate-900" />;
   }
 
   return (
     <div
       ref={stageRef}
-      className="relative h-[calc(100dvh-8.5rem)] min-h-[560px] overflow-hidden rounded-2xl text-white"
+      className={`relative min-h-[520px] overflow-hidden text-white ${
+        fullscreen ? "h-dvh min-h-dvh" : "h-[calc(100dvh-76px)]"
+      }`}
     >
       {/* Theme covers live in /public and swap at runtime; next/image is less practical here. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}

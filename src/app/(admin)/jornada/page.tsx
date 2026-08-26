@@ -44,6 +44,16 @@ function weather(checkIn: CheckIn, t: (key: TranslationKey) => string) {
       : { symbol: "☁", label: t("journey.demandingDay") };
 }
 
+function dayAnalysis(checkIn: CheckIn, t: (key: TranslationKey) => string) {
+  const values = Object.values(checkIn);
+  if (!values.length) return "";
+  const mean = values.reduce<number>((sum, value) => sum + value, 0) / values.length;
+
+  if (mean < 0.7) return t("journey.analysisLight");
+  if (mean < 1.4) return t("journey.analysisMixed");
+  return t("journey.analysisDemanding");
+}
+
 export default function JornadaPage() {
   const { dateLocale, t } = useLanguage();
   const questions = (Object.keys(questionCopy) as QuestionId[]).map((id) => ({
@@ -73,12 +83,30 @@ export default function JornadaPage() {
   }, []);
   useEffect(() => { if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify({ entries, checkIns })); }, [entries, checkIns, ready]);
 
+  // A new day opens with its first unanswered check-in question already visible.
+  // Closing it is still respected until the person changes the day or answers again.
+  useEffect(() => {
+    if (!ready) return;
+
+    const savedCheckIn = checkIns[selectedDate] || {};
+    const firstUnanswered = (Object.keys(questionCopy) as QuestionId[]).findIndex(
+      (questionId) => savedCheckIn[questionId] === undefined,
+    );
+
+    setActiveQuestion(firstUnanswered === -1 ? null : firstUnanswered);
+  }, [checkIns, ready, selectedDate]);
+
   const dayEntries = useMemo(() => entries.filter((entry) => entry.date === selectedDate).sort((a, b) => a.createdAt.localeCompare(b.createdAt)), [entries, selectedDate]);
   const bookmarked = entries.filter((entry) => entry.favorite);
   const bookmarkedDates = new Set(bookmarked.map((entry) => entry.date));
   const writtenDates = new Set(entries.map((entry) => entry.date));
   const checkIn = checkIns[selectedDate] || {};
+  const firstUnansweredQuestion = (Object.keys(questionCopy) as QuestionId[]).findIndex(
+    (questionId) => checkIn[questionId] === undefined,
+  );
+  const isCheckInComplete = firstUnansweredQuestion === -1;
   const currentWeather = weather(checkIn, t);
+  const analysis = dayAnalysis(checkIn, t);
   const calendarWeekdays = Array.from(
     { length: 7 },
     (_, index) => new Intl.DateTimeFormat(dateLocale, { weekday: "narrow" }).format(new Date(2024, 0, 1 + index)),
@@ -124,7 +152,7 @@ export default function JornadaPage() {
     setEntries((current) => current.map((item) => item.id === id ? { ...item, favorite: !item.favorite } : item));
   };
   const answer = (value: Answer) => {
-    if (activeQuestion === null) return;
+    if (activeQuestion === null || isCheckInComplete) return;
     const question = questions[activeQuestion];
     setCheckIns((current) => ({ ...current, [selectedDate]: { ...(current[selectedDate] || {}), [question.id]: value } }));
     setActiveQuestion(activeQuestion === questions.length - 1 ? null : activeQuestion + 1);
@@ -200,6 +228,24 @@ export default function JornadaPage() {
           border-color: #354660 !important;
           box-shadow: 0 14px 30px rgba(2, 8, 23, .38);
         }
+        /* The check-in is actionable: give its question and choices an explicit, high-contrast dark treatment. */
+        .dark .journey-layout .journey-checkin { color: #f8fafc; }
+        .dark .journey-layout .journey-checkin .text-slate-400 { color: #bbcee6 !important; }
+        .dark .journey-layout .journey-checkin .text-slate-500 { color: #dbe7f5 !important; }
+        .dark .journey-layout .journey-checkin .text-slate-700,
+        .dark .journey-layout .journey-checkin .text-slate-800 { color: #f8fafc !important; }
+        .dark .journey-layout .journey-checkin-option {
+          background-color: #18263a !important;
+          border-color: #536b90 !important;
+        }
+        .dark .journey-layout .journey-checkin-option:hover {
+          background-color: #233956 !important;
+          border-color: #9dc5f2 !important;
+        }
+        .dark .journey-layout .journey-checkin-option:focus-visible {
+          outline: 2px solid #93c5fd;
+          outline-offset: 2px;
+        }
       `}</style>
       <section className="relative mb-7 border-b border-slate-200 pb-5">
         <div className="mb-3"><p className="text-sm font-medium text-slate-600">{t("journey.week")}</p></div>
@@ -219,7 +265,52 @@ export default function JornadaPage() {
         </section>
 
         <aside className="self-start border-l border-slate-200 pl-6">
-          {activeQuestion === null ? <div><div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-[.15em] text-slate-400">{t("journey.innerClimate")}</p><button className="relative text-slate-700" aria-label={t("journey.daySummary")}><Heart size={20} /><Cloud size={11} className="absolute -bottom-1 -right-1 bg-white" /></button></div><p className="mt-4 font-serif text-xl text-slate-800">{currentWeather.symbol} {currentWeather.label}</p><p className="mt-2 text-sm leading-6 text-slate-500">{t("journey.climateDescription")}</p><button onClick={() => setActiveQuestion(0)} className="mt-5 text-sm font-medium text-slate-800 underline underline-offset-4">{t("journey.startCheckIn")}</button></div> : <div><button onClick={() => setActiveQuestion(null)} className="float-right text-slate-400" aria-label={t("journey.closeCheckIn")}><X size={16} /></button><p className="text-xs font-semibold uppercase tracking-[.15em] text-slate-400">{t("journey.checkInProgress", { current: activeQuestion + 1, total: questions.length })}</p><div className="mt-3 h-px bg-slate-200"><div className="h-px bg-slate-800" style={{ width: `${((activeQuestion + 1) / questions.length) * 100}%` }} /></div><p className="mt-5 font-serif text-lg leading-7 text-slate-800">{questions[activeQuestion].title}</p><div className="mt-5 grid grid-cols-3 gap-2">{[...moods].reverse().map((mood, index) => { const value = (2 - index) as Answer; return <button key={mood} onClick={() => answer(value)} className="rounded-lg border border-slate-200 px-3 py-3 text-center text-slate-700 hover:border-slate-700"><span className="block text-2xl">{mood}</span><span className="mt-2 block text-xs leading-5 text-slate-500">{questions[activeQuestion].options[value]}</span></button>; })}</div></div>}
+          {activeQuestion === null ? (
+            <div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-[.15em] text-slate-400">{t("journey.innerClimate")}</p>
+                <span className="relative text-slate-700" aria-label={t("journey.daySummary")}>
+                  <Heart size={20} />
+                  <Cloud size={11} className="absolute -bottom-1 -right-1 bg-white" />
+                </span>
+              </div>
+              <p className="mt-4 font-serif text-xl text-slate-800">{currentWeather.symbol} {currentWeather.label}</p>
+              {isCheckInComplete ? (
+                <div className="mt-5 rounded-xl border border-slate-200 bg-white/70 p-4">
+                  <p className="text-sm font-medium leading-6 text-slate-800">{analysis}</p>
+                </div>
+              ) : (
+                <>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{t("journey.climateDescription")}</p>
+                  <button onClick={() => setActiveQuestion(firstUnansweredQuestion === -1 ? 0 : firstUnansweredQuestion)} className="mt-5 text-sm font-medium text-slate-800 underline underline-offset-4">
+                    {Object.keys(checkIn).length ? t("journey.continueCheckIn") : t("journey.startCheckIn")}
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="journey-checkin">
+              <button onClick={() => setActiveQuestion(null)} className="float-right text-slate-400" aria-label={t("journey.closeCheckIn")}>
+                <X size={16} />
+              </button>
+              <p className="text-xs font-semibold uppercase tracking-[.15em] text-slate-400">{t("journey.checkInProgress", { current: activeQuestion + 1, total: questions.length })}</p>
+              <div className="mt-3 h-px bg-slate-200">
+                <div className="h-px bg-slate-800" style={{ width: `${((activeQuestion + 1) / questions.length) * 100}%` }} />
+              </div>
+              <p className="mt-5 font-serif text-lg leading-7 text-slate-800">{questions[activeQuestion].title}</p>
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                {[...moods].reverse().map((mood, index) => {
+                  const value = (2 - index) as Answer;
+                  return (
+                    <button key={mood} onClick={() => answer(value)} className="journey-checkin-option rounded-lg border border-slate-200 px-3 py-3 text-center text-slate-700 hover:border-slate-700">
+                      <span className="block text-2xl">{mood}</span>
+                      <span className="mt-2 block text-xs leading-5 text-slate-500">{questions[activeQuestion].options[value]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </aside>
       </div>
     </main>

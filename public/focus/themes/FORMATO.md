@@ -1,5 +1,17 @@
 # Temas do Foco — como trocar imagem, vídeo e som
 
+## Área visual do Foco
+
+A rota **Foco** não fica mais limitada por um card: a cena ocupa toda a área disponível abaixo do cabeçalho.
+
+- **No app:** largura disponível depois do menu lateral × `calc(100dvh - 76px)`.
+- **Em tela cheia:** `100vw × 100dvh`.
+- **Proporção de criação:** **16:9**. Crie o arquivo mestre em **3840×2160** e entregue uma versão otimizada em **1920×1080**.
+- **Área segura:** deixe os 10% das bordas livres de elementos importantes e não coloque texto na cena; os controles do timer podem aparecer sobre qualquer parte do vídeo.
+- A cena é exibida com `object-fit: cover`, então as bordas podem ser cortadas em telas ultrawide ou verticais. O assunto principal deve ficar no centro de 80% da imagem.
+
+Isso é o formato ideal para paisagens, cachoeira, floresta e animais com animação suave. Use a imagem `cover.jpg` como poster/backup do vídeo.
+
 Cada pasta em `public/focus/themes/<id>/` é um tema. O app procura **exatamente** estes nomes:
 
 ```
@@ -35,7 +47,7 @@ Ids atuais:
 Quando este arquivo existir, ele substitui o `cover.jpg` como fundo animado.
 
 - Formato: **WebM (VP9)** — menor e mais suave no navegador
-- Alternativa aceitável: `loop.mp4` (H.264) — se for usar MP4, avise para apontarmos o player
+- Alternativa aceitável: `loop.mp4` (H.264) — se for usar MP4, a extensão precisa ser apontada no player
 - Sem áudio no vídeo (o som vai no `audio.mp3`)
 - Loop contínuo, sem cortes bruscos no início/fim
 - Duração: **8 a 20 segundos**
@@ -48,7 +60,7 @@ Quando este arquivo existir, ele substitui o `cover.jpg` como fundo animado.
 Quando o arquivo existir, o app usa ele no lugar do som gerado no navegador.
 
 - Formato principal: **MP3, 128–192 kbps, stereo, 44.1 kHz**
-- Fallback: **OGG Vorbis** (`audio.ogg`)
+- Fallback: **OGG Vorbis** (`audio.ogg`); para novos arquivos, Opus em `.ogg` também funciona muito bem
 - Loop: o começo e o fim devem se encontrar (crossfade de 1–2 s na edição)
 - Duração: **30 s a 3 min** (o player repete)
 - Volume master: grave o arquivo em volume médio; o usuário controla no app
@@ -74,3 +86,10 @@ Sugestão de conteúdo por tema:
 2. Senão → `cover.jpg`
 3. Se existir `audio.mp3` (ou `.ogg`) → toca o arquivo
 4. Senão → som gerado no navegador (exceto **Silêncio total**)
+
+## Para adicionar um tema novo
+
+1. Crie `public/focus/themes/<id-do-tema>/` com `cover.jpg` e, se houver, `loop.webm`, `audio.mp3` e `audio.ogg`.
+2. Adicione o id em `src/lib/ocean/focus.ts` e uma etiqueta traduzida em `src/components/focus/FocusStage.tsx`.
+3. O id deve ser minúsculo, sem espaços e com hífens, por exemplo: `floresta-cachoeira`.
+4. Para animações vetoriais leves de interface, use Lottie (`.json`) como sobreposição; para animais e natureza, prefira vídeo WebM/MP4. Não use GIF: ele pesa mais e não oferece controle de qualidade adequado.

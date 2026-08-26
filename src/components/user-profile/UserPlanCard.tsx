@@ -13,6 +13,12 @@ const plans: Array<{
   current: boolean;
 }> = [
   {
+    nameKey: "profile.plan.weekly",
+    detailKey: "profile.plan.weeklyDetail",
+    valueKey: "profile.plan.weeklyValue",
+    current: false,
+  },
+  {
     nameKey: "profile.plan.monthly",
     detailKey: "profile.plan.monthlyDetail",
     valueKey: "profile.plan.monthlyValue",
@@ -66,7 +72,7 @@ export default function UserPlanCard() {
         </a>
       </div>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
           <div
             key={plan.nameKey}

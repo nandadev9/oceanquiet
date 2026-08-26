@@ -68,17 +68,18 @@ Quando o arquivo existir, o app usa ele no lugar do som gerado no navegador.
 
 Sugestão de conteúdo por tema:
 
-| Pasta            | Som                          |
-|------------------|------------------------------|
-| oceano-quieto    | ondas lentas, vento leve     |
-| canto-no-campo   | pássaros, grama, sem galo    |
-| companhia        | teclado, murmurinho de sala  |
-| estrada          | motor baixo, asfalto, sem buzina |
-| cafeteria        | xícaras, conversas ao fundo  |
-| chuva            | chuva constante na janela    |
-| onda-de-foco     | ruído marrom + beat 40 Hz    |
-| classico         | piano/orquestra instrumental |
-| silencio         | deixe **sem** audio.mp3      |
+| #  | Tema                           | Experiência / cena                                                                             | Animação                                                                             | Paisagem sonora                                                   | Clima visual                                |
+| -- | ------------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------- |
+| 01 | 🌊 **Oceano Quieto**           | Um refúgio de frente para o mar, feito para simplesmente observar as ondas                     | Ondas, reflexos na água, cortina/vegetação muito sutil                               | Ondas contínuas, brisa                                            | Azul, areia, branco, luz natural            |
+| 02 | 🗻 **Monte Fuji**              | Uma casa japonesa tranquila com vista privilegiada para o Fuji e um lago                       | Água, nuvens lentas, folhas                                                          | Água, vento, aves muito distantes                                 | Azul suave, verde, creme, rosa pálido       |
+| 03 | 🚗 **Dirigindo no Rio**        | Dentro do carro, dirigindo sem pressa pela orla do Rio no começo da noite                      | Estrada avançando, postes passando, oceano, luzes distantes                          | Pneus no asfalto, motor baixo, vento e mar                        | Blue hour, oceano profundo, dourado         |
+| 04 | 🌌 **Aurora Boreal**           | Um motorhome estacionado na neve diante de uma aurora imensa                                   | Aurora lenta, estrelas e neve ocasional                                              | Vento distante, aquecedor/ventilação abafada                      | Azul-marinho, turquesa, verde-aurora, âmbar |
+| 05 | 🦒 **Varanda na Savana**       | Uma varanda confortável olhando a savana; elefantes e girafas vivem ao longe                   | Capim, folhas, animais distantes; ocasionalmente uma girafa cruza a frente da tela   | Vento, aves e sons muito distantes da savana                      | Areia, terracota, oliva, madeira            |
+| 06 | 🧑‍💻 **Não me deixe sozinho** | Trabalhar à noite em um ambiente acolhedor sabendo que outras pessoas também estão trabalhando | Pequenos reflexos, luzes distantes, chuva opcional                                   | Teclados distantes, páginas, cadeira, murmúrios quase indistintos | Âmbar, marrom, azul-noturno                 |
+| 07 | 🚆 **Último Trem para Casa**   | Viajar junto à janela de um trem quase vazio enquanto pequenas cidades passam lá fora          | Paisagem deslizando, postes, reflexos no vidro, luzes distantes                      | Trilhos ritmados, vibração, ventilação                            | Azul-noturno, âmbar, verde profundo         |
+| 08 | 🐋 **Debaixo do Mundo**        | Uma sala de observação submarina diante da imensidão azul                                      | Partículas, raios de luz, pequenos cardumes; raramente uma baleia atravessa a janela | Água abafada, vibração grave e ambiente submarino                 | Azul profundo, petróleo, ciano              |
+| 09 | 🌊 **Farol no Fim do Mundo**   | Refúgio de um faroleiro numa ilha remota, olhando o oceano e os penhascos                      | Mar, névoa, chuva fina; feixe do farol passa periodicamente                          | Ondas, vento, madeira da casa, chuva ocasional                    | Cinza-azulado, creme, verde-mar, âmbar      |
+| 10 | 🛰️ **Órbita Silenciosa**      | Uma estação espacial minimalista com uma enorme janela para a Terra                            | Terra quase imperceptivelmente girando, nuvens e transição lenta dia/noite           | Ventilação constante, hum grave da estação                        | Preto azulado, branco, azul-Terra           |
 
 ## Ordem de prioridade no app
 
